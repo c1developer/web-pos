@@ -1,14 +1,13 @@
 "use client"
 import { Button } from "@/components/ui/button"
 import { Separator } from "../ui/separator"
-import { signIn, useSession } from "next-auth/react"
+import { signIn } from "next-auth/react"
 import { useForm } from "@tanstack/react-form"
 import { z } from "zod"
 import { Field, FieldError, FieldGroup, FieldLabel } from "../ui/field"
 import { InputGroup, InputGroupInput } from "../ui/input-group"
-import { usePathname, useRouter } from "next/navigation"
-import { useEffect } from "react"
-import { ablyClient } from "@/lib/ably"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 const signInSchema = z.object({
   username: z.string().nonempty("Employee number must not be empty."),
@@ -17,7 +16,6 @@ const signInSchema = z.object({
 
 function LoginForm() {
   const router = useRouter()
-
   const form = useForm({
     defaultValues: {
       username: "",
@@ -26,17 +24,17 @@ function LoginForm() {
     validators: {
       onSubmit: signInSchema,
     },
-    onSubmit: async ({ value: payload }: any) => {
+    onSubmit: async ({ value: payload, formApi }: any) => {
       try {
         const response = await signIn("credentials", {
           username: payload.username,
           password: payload.password,
           redirect: false,
         })
+        if (response?.error) throw new Error(response.error)
         if (response?.ok) router.push("/dashboard")
-      } catch (error) {
-        console.error(error)
-        throw error
+      } catch (error: any) {
+        toast.error(error.message)
       }
     },
   })
@@ -128,18 +126,18 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
-  useEffect(() => {
-    const channel = ablyClient.channels.get("brands")
+  // useEffect(() => {
+  //   const channel = ablyClient.channels.get("brands")
 
-    channel.subscribe("brand-created", (sub) => {
-      console.log("Brand created:", sub.data.name)
-    })
+  //   channel.subscribe("brand-created", (sub) => {
+  //     console.log("Brand created:", sub.data.name)
+  //   })
 
-    return () => {
-      channel.unsubscribe()
-      ablyClient.close()
-    }
-  }, [])
+  //   return () => {
+  //     channel.unsubscribe()
+  //     ablyClient.close()
+  //   }
+  // }, [])
 
   return (
     <div className="flex h-screen w-full justify-end bg-primary/20">

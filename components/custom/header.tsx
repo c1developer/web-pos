@@ -1,0 +1,78 @@
+"use client"
+import { signOut, useSession } from "next-auth/react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuPortal,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu"
+import { Button } from "../ui/button"
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
+import { SidebarTrigger } from "../ui/sidebar"
+
+function ProfileMenu() {
+  const { data: session }: any = useSession()
+  const user = session?.user
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="h-full space-x-1">
+          <Avatar>
+            <AvatarImage
+              src="https://github.com/shadcn.png"
+              alt="@shadcn"
+              className="grayscale"
+            />
+            <AvatarFallback>CN</AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col items-start">
+            <span>{user?.name}</span>
+            <span className="text-xs text-muted-foreground capitalize">
+              {user?.role?.toLowerCase()}
+            </span>
+          </div>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-40" align="start">
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>My Account</DropdownMenuLabel>
+          <DropdownMenuItem>Profile</DropdownMenuItem>
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          <DropdownMenuItem>Switch User</DropdownMenuItem>
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>Security</DropdownMenuSubTrigger>
+            <DropdownMenuPortal>
+              <DropdownMenuSubContent>
+                <DropdownMenuItem>Change Password</DropdownMenuItem>
+                <DropdownMenuItem>Change Profile</DropdownMenuItem>
+              </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+          </DropdownMenuSub>
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          <DropdownMenuItem onClick={() => signOut()}>Log out</DropdownMenuItem>
+        </DropdownMenuGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
+export default function Header() {
+  return (
+    <div className="sticky flex h-12 w-full items-center justify-between border-b bg-sidebar">
+      <SidebarTrigger className="h-full" />
+      <ProfileMenu />
+    </div>
+  )
+}

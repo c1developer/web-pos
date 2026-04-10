@@ -1,9 +1,9 @@
 import { Geist, Geist_Mono } from "next/font/google"
-
 import "./globals.css"
 import { cn } from "@/lib/utils"
 import { Metadata } from "next"
 import ApolloLayout from "@/components/custom/layouts/apollo-layout"
+import { Toaster } from "@/components/ui/sonner"
 
 export const metadata: Metadata = {
   title: "Point of Sale System",
@@ -35,6 +35,7 @@ export default function RootLayout({
     >
       <body>
         <ApolloLayout>{children}</ApolloLayout>
+        <Toaster richColors theme="light" visibleToasts={5} expand />
       </body>
     </html>
   )

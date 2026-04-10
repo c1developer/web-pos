@@ -35,6 +35,7 @@ const handler = NextAuth({
       },
       authorize: async (cred: Credentials | undefined) => {
         try {
+          console.log("Attempting to sign in with credentials:", cred)
           const result = await client.mutate({
             mutation: SIGN_IN,
             variables: {
@@ -49,9 +50,8 @@ const handler = NextAuth({
             accessToken: (result as any).data?.signIn.token,
           }
         } catch (error) {
-          console.error(error)
           throw new Error(
-            "Failed to sign in. Please check credentials and try again."
+            "Invalid sign in. Please check your credentials and try again."
           )
         }
       },

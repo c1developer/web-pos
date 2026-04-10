@@ -10,7 +10,7 @@ export default function Page() {
       <span className="block">
         Welcome to the dashboard, {session?.user?.name}!
       </span>
-      Dashboard <Button onClick={() => signOut()}>Log out</Button>
+      Dashboard
     </div>
   )
 }
