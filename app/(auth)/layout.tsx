@@ -9,11 +9,11 @@ export default function AuthLayout({
   children: React.ReactNode
 }>) {
   return (
-    <SidebarProvider>
+    <SidebarProvider className="w-full">
       <AppSidebar />
-      <main className="flex-1">
+      <main className="flex flex-1 flex-col">
         <Header />
-        {children}
+        <div className="flex-1">{children}</div>
       </main>
     </SidebarProvider>
   )

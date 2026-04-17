@@ -8,6 +8,7 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "../ui/field"
 import { InputGroup, InputGroupInput } from "../ui/input-group"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import { useTransition } from "react"
 
 const signInSchema = z.object({
   username: z.string().nonempty("Employee number must not be empty."),
@@ -15,6 +16,8 @@ const signInSchema = z.object({
 })
 
 function LoginForm() {
+  const [isPending, startTransition] = useTransition()
+
   const router = useRouter()
   const form = useForm({
     defaultValues: {
@@ -114,8 +117,8 @@ function LoginForm() {
           </FieldGroup>
         </form>
         <Separator className="my-2" />
-        <Button form="sign-in-form" type="submit" className="w-full">
-          Login
+        <Button form="sign-in-form" type="submit" className="w-full" disabled={isPending}>
+         Sign In
         </Button>
         <Button variant="link" className="w-full">
           Forgot your password?
@@ -126,19 +129,6 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
-  // useEffect(() => {
-  //   const channel = ablyClient.channels.get("brands")
-
-  //   channel.subscribe("brand-created", (sub) => {
-  //     console.log("Brand created:", sub.data.name)
-  //   })
-
-  //   return () => {
-  //     channel.unsubscribe()
-  //     ablyClient.close()
-  //   }
-  // }, [])
-
   return (
     <div className="flex h-screen w-full justify-end bg-primary/20">
       <div className="flex w-full flex-col items-center justify-center border border-r bg-background xl:w-md">

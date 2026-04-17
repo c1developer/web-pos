@@ -24,5 +24,19 @@ export default withAuth(
 )
 
 export const config = {
-  matcher: ["/", "/dashboard/:path*", "/user/:path*"],
+  matcher: [
+    "/",
+    "/dashboard/:path*",
+    "/user/:path*",
+    "/brand/:path*",
+    "/cash-register/:path*",
+    "/product/:path*",
+    "/process/:path*",
+    "/sale-history/:path*",
+    "/product-type/:path*",
+    "/payment/:path*",
+    "/outlet/:path*",
+    "/customer/:path*",
+    "/payment-method/:path*",
+  ],
 }

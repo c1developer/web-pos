@@ -1,9 +1,7 @@
 import NextAuth, { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { gql } from "@apollo/client"
-import { createApolloClient } from "@/lib/apollo"
-
-const client = createApolloClient()
+import { client } from "@/lib/apollo"
 
 interface Credentials {
   username: string
@@ -45,6 +43,7 @@ const handler = NextAuth({
           })
           if (!result) throw new Error("Invalid sign in.")
           const user = (result as any).data?.signIn.user
+          console.log(user)
           return {
             ...user,
             accessToken: (result as any).data?.signIn.token,

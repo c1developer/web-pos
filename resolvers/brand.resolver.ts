@@ -8,7 +8,6 @@ import { flatten } from "../helpers/flatten"
 import { checkSchema, validate } from "../helpers/validate"
 import { brandSchema } from "../validators/brand.validator"
 import { isISOString } from "../helpers/isoString"
-import { ablyClient } from "@/lib/ably"
 
 const CURSOR_TYPE = "brand"
 
@@ -168,8 +167,6 @@ export const brandResolver = {
       async (_: any, { input }: any) => {
         try {
           const result = await Brand.create(input)
-          const channel = ablyClient.channels.get("brands")
-          await channel.publish("brand-created", generateNode(result))
           return {
             ok: true,
             message: "Brand created successfully.",
