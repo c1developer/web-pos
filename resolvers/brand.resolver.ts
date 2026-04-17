@@ -66,8 +66,7 @@ export const brandResolver = {
           const { id, type, value } = fromCursor(after)
           if (type !== CURSOR_TYPE) throw new Error("Invalid cursor")
           const cursorId = new Types.ObjectId(id)
-          const cursorValue =
-            sortKey === "dateUpdated" ? new Date(value) : value
+          const cursorValue = isISOString(value) ? new Date(value) : value
 
           matchStage.$and = [
             ...(matchStage.$and || []),

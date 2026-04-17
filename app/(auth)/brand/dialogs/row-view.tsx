@@ -12,6 +12,7 @@ import {
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import { Label } from "@/components/ui/label"
 import { useQuery } from "@apollo/client/react"
+import { format } from "date-fns"
 import gql from "graphql-tag"
 import React, { useState } from "react"
 
@@ -54,11 +55,27 @@ export default function RowViewDialog({ _id, open, setOpen }: Props) {
           <DialogTitle>View Brand</DialogTitle>
           <DialogDescription>Details of the brand.</DialogDescription>
         </DialogHeader>
-        <div className="flex flex-col">
+        <div className="flex flex-col gap-1.5">
           <div>
             <Label>Name</Label>
             <span className="block text-muted-foreground">
               {data?.brand?.name}
+            </span>
+          </div>
+          <div>
+            <Label>Created Date</Label>
+            <span className="block text-muted-foreground">
+              {data?.brand?.createdAt
+                ? format(Number(data.brand.createdAt), "PPpp")
+                : "-"}
+            </span>
+          </div>
+          <div>
+            <Label>Updated Date</Label>
+            <span className="block text-muted-foreground">
+              {data?.brand?.updatedAt
+                ? format(Number(data.brand.updatedAt), "PPpp")
+                : "-"}
             </span>
           </div>
         </div>

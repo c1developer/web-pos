@@ -15,17 +15,25 @@ import { useQuery } from "@apollo/client/react"
 import gql from "graphql-tag"
 import React, { useState } from "react"
 import { format } from "date-fns"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 type Props = {
   _id: string
   onClose: () => void
 }
 
-const GET_BRAND = gql`
-  query Brand($_id: ID!) {
-    brand(_id: $_id) {
+const GET_USER = gql`
+  query User($_id: ID!) {
+    user(_id: $_id) {
       _id
+      image
       name
+      surname
+      displayName
+      email
+      username
+      role
+      pin
       isActive
       createdAt
       updatedAt
@@ -35,7 +43,7 @@ const GET_BRAND = gql`
 
 export default function ViewDialog({ _id, onClose }: Props) {
   const [open, setOpen] = useState(false)
-  const { data }: any = useQuery(GET_BRAND, {
+  const { data }: any = useQuery(GET_USER, {
     variables: {
       _id,
     },
@@ -57,29 +65,58 @@ export default function ViewDialog({ _id, onClose }: Props) {
         showCloseButton={false}
       >
         <DialogHeader>
-          <DialogTitle>View Brand</DialogTitle>
-          <DialogDescription>Details of the brand.</DialogDescription>
+          <DialogTitle>View User</DialogTitle>
+          <DialogDescription>Details of the user.</DialogDescription>
         </DialogHeader>
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-1.5 md:grid md:grid-cols-2">
+          <div className="col-span-2 flex items-center justify-center mb-4">
+            <Avatar className="w-25 h-25">
+              <AvatarFallback className="text-5xl">{data?.user?.name?.[0]}</AvatarFallback>
+            </Avatar>
+          </div>
           <div>
             <Label>Name</Label>
             <span className="block text-muted-foreground">
-              {data?.brand?.name}
+              {data?.user?.name}
+            </span>
+          </div>
+          <div>
+            <Label>Surname</Label>
+            <span className="block text-muted-foreground">
+              {data?.user?.surname}
+            </span>
+          </div>
+          <div>
+            <Label>Display Name</Label>
+            <span className="block text-muted-foreground">
+              {data?.user?.displayName}
+            </span>
+          </div>
+          <div className="col-span-2">
+            <Label>Email</Label>
+            <span className="block text-muted-foreground">
+              {data?.user?.email}
+            </span>
+          </div>
+          <div>
+            <Label>Role</Label>
+            <span className="block text-muted-foreground">
+              {data?.user?.role}
             </span>
           </div>
           <div>
             <Label>Created Date</Label>
             <span className="block text-muted-foreground">
-              {data?.brand?.createdAt
-                ? format(Number(data.brand.createdAt), "PPpp")
+              {data?.user?.createdAt
+                ? format(Number(data.user.createdAt), "PPpp")
                 : "-"}
             </span>
           </div>
           <div>
             <Label>Updated Date</Label>
             <span className="block text-muted-foreground">
-              {data?.brand?.updatedAt
-                ? format(Number(data.brand.updatedAt), "PPpp")
+              {data?.user?.updatedAt
+                ? format(Number(data.user.updatedAt), "PPpp")
                 : "-"}
             </span>
           </div>

@@ -6,7 +6,10 @@ export const client = new ApolloClient({
     typePolicies: {
       Brand: {
         keyFields: ["_id"],
-      }
+      },
+      User: {
+        keyFields: ["_id"],
+      },
     }
   }),
 })

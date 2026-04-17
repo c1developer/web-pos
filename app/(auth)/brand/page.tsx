@@ -268,7 +268,7 @@ export default function Page() {
         <Label className="text-xl font-medium">Brand</Label>
         <FormDialog />
       </div>
-      <div className="ga flex justify-between">
+      <div className="flex justify-between">
         <InputGroup>
           <InputGroupInput
             onChange={(e) => setSearchTerm(e.currentTarget.value)}
@@ -317,7 +317,6 @@ export default function Page() {
         columns={columns}
         data={nodes.slice((page.current - 1) * rows, page.current * rows)}
         actionsColumn={<Actions />}
-        // rowView={<ViewDialog row />}
       />
     </div>
   )

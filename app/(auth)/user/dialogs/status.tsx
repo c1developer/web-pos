@@ -22,18 +22,18 @@ type Props = {
   onClose: () => void
 }
 
-const GET_BRAND = gql`
-  query Brand($_id: ID!) {
-    brand(_id: $_id) {
+const GET_USER = gql`
+  query User($_id: ID!) {
+    user(_id: $_id) {
       _id
       name
     }
   }
 `
 
-const CHANGE_STATUS_BRAND = gql`
-  mutation ChangeBrandStatus($_id: ID!) {
-    changeBrandStatus(_id: $_id) {
+const CHANGE_STATUS_USER = gql`
+  mutation ChangeUserStatus($_id: ID!) {
+    changeUserStatus(_id: $_id) {
       ok
       message
       data
@@ -43,15 +43,15 @@ const CHANGE_STATUS_BRAND = gql`
 
 export default function StatusDialog({ _id, status, onClose }: Props) {
   const [open, setOpen] = useState(false)
-  const { data }: any = useQuery(GET_BRAND, {
+  const { data }: any = useQuery(GET_USER, {
     variables: {
       _id,
     },
     fetchPolicy: "network-only",
     skip: !_id || !open,
   })
-  const [changeStatus] = useMutation(CHANGE_STATUS_BRAND, {
-    refetchQueries: ["BrandTable"],
+  const [changeStatus] = useMutation(CHANGE_STATUS_USER, {
+    refetchQueries: ["UserTable"],
     awaitRefetchQueries: true,
   })
   const statusText = status ? "Deactivate" : "Activate"
@@ -59,9 +59,9 @@ export default function StatusDialog({ _id, status, onClose }: Props) {
   const onStatusChange = async () => {
     try {
       const result: any = await changeStatus({ variables: { _id } })
-      if (result.data.changeBrandStatus.ok) {
+      if (result.data.changeUserStatus.ok) {
         // Optionally, you can show a success message here
-        toast.success(result.data.changeBrandStatus.message)
+        toast.success(result.data.changeUserStatus.message)
         onClose()
       }
     } catch (error) {
@@ -83,10 +83,10 @@ export default function StatusDialog({ _id, status, onClose }: Props) {
       >
         <DialogHeader>
           <DialogTitle>
-            {statusText} Brand: <span className="underline">{data?.brand?.name}</span>
+            {statusText} User: <span className="underline">{data?.user?.name}</span>
           </DialogTitle>
           <DialogDescription>
-            Are you sure you want to {statusText.toLowerCase()} this brand?
+            Are you sure you want to {statusText.toLowerCase()} this user?
           </DialogDescription>
         </DialogHeader>
 

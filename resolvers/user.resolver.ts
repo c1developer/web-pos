@@ -12,13 +12,6 @@ import { isISOString } from "../helpers/isoString"
 
 const CURSOR_TYPE = "user"
 
-const generateNode = (user: any) => ({
-  _id: user._id,
-  fullName: `${user.name} ${user.surname}`,
-  role: user.role,
-  isActive: user.isActive,
-})
-
 export const userResolver = {
   Query: {
     user: async (_: any, { _id }: any) => {
@@ -50,6 +43,7 @@ export const userResolver = {
         if (filter && filter.length > 0)
           matchStage.$and = filter.map(({ type, key, value }) => {
             switch (type) {
+              case "SELECT":
               case "TEXT":
                 return { [key]: { $regex: value, $options: "i" } }
               case "NUMBER":
@@ -68,12 +62,14 @@ export const userResolver = {
               case "BOOLEAN":
                 return { [key]: value === "true" }
               default:
-                return null
+                return { [key]: { $regex: value, $options: "i" } }
+
             }
           })
 
         const sortKey = sort?.key || "_id"
         const sortOrder = sort?.order === "ASC" ? 1 : -1
+        const total = await User.countDocuments(matchStage)
 
         if (after) {
           const { id, type, value } = fromCursor(after)
@@ -121,39 +117,29 @@ export const userResolver = {
           },
         ]
 
-        const [result, total] = await Promise.all([
-          User.aggregate(pipeline),
-          User.aggregate([
-            ...pipeline.filter(
-              (stage) =>
-                !("$limit" in stage) &&
-                !("$sort" in stage) &&
-                !("$project" in stage)
-            ),
-            { $count: "total" },
-          ]).then((res) => (res[0] ? res[0].total : 0)),
-        ])
 
+        const result = await User.aggregate(pipeline)
         const sliced = result.slice(0, first)
+        const edges = sliced.map((edge) => ({
+          node: edge,
+          cursor: toCursor({
+            type: CURSOR_TYPE,
+            id: edge._id.toString(),
+            value: edge[sortKey],
+          }),
+        }))
 
         return {
           total,
           pages: Math.ceil(total / first),
-          edges: sliced.map((edge) => ({
-            node: edge,
-            cursor: toCursor({
-              id: edge._id.toString(),
-              type: CURSOR_TYPE,
-              value: edge[sortKey],
-            }),
-          })),
+          edges,
           pageInfo: {
             endCursor: sliced.length
               ? toCursor({
-                  id: sliced[sliced.length - 1]._id.toString(),
-                  type: CURSOR_TYPE,
-                  value: sliced[sliced.length - 1][sortKey],
-                })
+                id: sliced[sliced.length - 1]._id.toString(),
+                type: CURSOR_TYPE,
+                value: sliced[sliced.length - 1][sortKey],
+              })
               : null,
             hasNextPage: result.length > first,
           },

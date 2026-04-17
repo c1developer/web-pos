@@ -14,7 +14,7 @@ import {
   InputGroupInput,
 } from "@/components/ui/input-group"
 import { GearIcon, MagnifyingGlassIcon } from "@phosphor-icons/react"
-import { IBrandNode } from "@/types/brand.type"
+import { IUserNode, Role } from "@/types/user.type"
 import { ColumnDef } from "@tanstack/react-table"
 import DataTable from "@/components/custom/data-table"
 import ColumnFilter from "@/components/custom/column-filter"
@@ -27,16 +27,18 @@ import {
 import ViewDialog from "./dialogs/view"
 import SortHeader from "@/components/custom/sort-header"
 import StatusDialog from "./dialogs/status"
+import Image from "next/image"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
-const GET_BRANDS = gql`
-  query BrandTable(
+const GET_USERS = gql`
+  query UserTable(
     $first: Int
     $after: String
     $search: String
     $filter: [Filter]
     $sort: Sort
   ) {
-    brandTable(
+    userTable(
       first: $first
       after: $after
       search: $search
@@ -49,7 +51,9 @@ const GET_BRANDS = gql`
         cursor
         node {
           _id
-          name
+          image
+          fullName
+          role
           isActive
         }
       }
@@ -61,7 +65,7 @@ const GET_BRANDS = gql`
   }
 `
 
-function Actions({ row }: { row?: IBrandNode }) {
+function Actions({ row }: { row?: IUserNode }) {
   const [open, setOpen] = useState(false)
   const data = useMemo(() => row, [row])
   const status = data?.isActive
@@ -116,7 +120,7 @@ export default function Page() {
   const [filter, setFilter] = useState<
     { key: string; value: string; type: FilterType }[]
   >([])
-  const { data, fetchMore, loading } = useQuery(GET_BRANDS, {
+  const { data, fetchMore, loading } = useQuery(GET_USERS, {
     variables: {
       first: rows,
       search,
@@ -129,46 +133,89 @@ export default function Page() {
 
   const { total, nodes, endCursor } = useMemo(() => {
     const result = data as any
-    const nodes = result?.brandTable?.edges?.map((edge: any) => edge.node) || []
-    const hasNextPage = result?.brandTable?.pageInfo?.hasNextPage || false
-    const endCursor = result?.brandTable?.pageInfo?.endCursor || null
+    const nodes = result?.userTable?.edges?.map((edge: any) => edge.node) || []
+    const hasNextPage = result?.userTable?.pageInfo?.hasNextPage || false
+    const endCursor = result?.userTable?.pageInfo?.endCursor || null
 
     setPage((prev) => ({
       ...prev,
-      max: result?.brandTable?.pages || 1,
+      max: result?.userTable?.pages || 1,
     }))
 
     return {
-      total: result?.brandTable?.total || 0,
-      pages: result?.brandTable?.pages || 0,
+      total: result?.userTable?.total || 0,
+      pages: result?.userTable?.pages || 0,
       nodes,
       hasNextPage,
       endCursor,
     }
   }, [data])
 
-  const columns: ColumnDef<IBrandNode>[] = useMemo(
+  const columns: ColumnDef<IUserNode>[] = useMemo(
     () => [
+      {
+        id: "image",
+        cell: ({ row }) =>
+          row.original.image ? (
+            <Image
+              src={row.original.image}
+              alt={row.original.fullName}
+              className="h-8 w-8 rounded-full object-cover"
+            />
+          ) : (
+            <Avatar className="h-8 w-8">
+              <AvatarFallback>{row.original.fullName[0]}</AvatarFallback>
+            </Avatar>
+          ),
+        size: 10,
+      },
       {
         id: "name",
         header: () => (
           <SortHeader
             label="Name"
-            sortKey="name"
+            sortKey="fullName"
             sortState={sort}
             onSortChange={setSort}
           />
         ),
         cell: ({ row }) => (
-          <span className="font-medium">{row.original.name}</span>
+          <span className="font-medium">{row.original.fullName}</span>
         ),
         footer: () => (
           <ColumnFilter
             label="Name"
-            filterKey="name"
+            filterKey="fullName"
             filterType={FilterType.TEXT}
             filter={filter}
             onFilterChange={onFilter}
+          />
+        ),
+      },
+      {
+        id: "role",
+        header: () => (
+          <SortHeader
+            label="Role"
+            sortKey="role"
+            sortState={sort}
+            onSortChange={setSort}
+          />
+        ),
+        cell: ({ row }) => (
+          <span className="font-medium">{row.original.role}</span>
+        ),
+        footer: () => (
+          <ColumnFilter
+            label="Role"
+            filterKey="role"
+            filterType={FilterType.SELECT}
+            filter={filter}
+            onFilterChange={onFilter}
+            options={Object.values(Role).map((role) => ({
+              label: role,
+              value: role,
+            }))}
           />
         ),
       },
@@ -226,17 +273,17 @@ export default function Page() {
         updateQuery: (prev: any, { fetchMoreResult: more }: any) => {
           if (!more) return prev
           const cursorSet = new Set([
-            ...prev.brandTable.edges.map((edge: any) => edge.cursor),
-            ...more.brandTable.edges.map((edge: any) => edge.cursor),
+            ...prev.userTable.edges.map((edge: any) => edge.cursor),
+            ...more.userTable.edges.map((edge: any) => edge.cursor),
           ])
           const filteredEdges = [
-            ...prev.brandTable.edges,
-            ...more.brandTable.edges,
+            ...prev.userTable.edges,
+            ...more.userTable.edges,
           ].filter((edge: any) => cursorSet.has(edge.cursor))
-          const pageInfo = more.brandTable.pageInfo
+          const pageInfo = more.userTable.pageInfo
           return {
-            brandTable: {
-              ...more.brandTable,
+            userTable: {
+              ...more.userTable,
               edges: filteredEdges,
               pageInfo,
             },
@@ -265,10 +312,10 @@ export default function Page() {
   return (
     <div className="flex h-full w-full flex-col gap-1.5 p-2.5">
       <div className="flex items-center gap-1.5">
-        <Label className="text-xl font-medium">Brand</Label>
+        <Label className="text-xl font-medium">User</Label>
         <FormDialog />
       </div>
-      <div className="ga flex justify-between">
+      <div className="flex justify-between">
         <InputGroup>
           <InputGroupInput
             onChange={(e) => setSearchTerm(e.currentTarget.value)}
@@ -317,7 +364,6 @@ export default function Page() {
         columns={columns}
         data={nodes.slice((page.current - 1) * rows, page.current * rows)}
         actionsColumn={<Actions />}
-        // rowView={<ViewDialog row />}
       />
     </div>
   )

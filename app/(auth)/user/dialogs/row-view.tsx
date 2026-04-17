@@ -7,13 +7,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
-import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import { Label } from "@/components/ui/label"
 import { useQuery } from "@apollo/client/react"
+import { format } from "date-fns"
 import gql from "graphql-tag"
-import React, { useState } from "react"
 
 type Props = {
   _id: string
@@ -21,11 +19,11 @@ type Props = {
   setOpen: (open: boolean) => void
 }
 
-const GET_BRAND = gql`
-  query Brand($_id: ID!) {
-    brand(_id: $_id) {
+const GET_USER = gql`
+  query User($_id: ID!) {
+    user(_id: $_id) {
       _id
-      name
+      fullName
       isActive
       createdAt
       updatedAt
@@ -34,7 +32,8 @@ const GET_BRAND = gql`
 `
 
 export default function RowViewDialog({ _id, open, setOpen }: Props) {
-  const { data }: any = useQuery(GET_BRAND, {
+  console.log("check")
+  const { data }: any = useQuery(GET_USER, {
     variables: {
       _id,
     },
@@ -51,14 +50,30 @@ export default function RowViewDialog({ _id, open, setOpen }: Props) {
         showCloseButton={false}
       >
         <DialogHeader>
-          <DialogTitle>View Brand</DialogTitle>
-          <DialogDescription>Details of the brand.</DialogDescription>
+          <DialogTitle>View User</DialogTitle>
+          <DialogDescription>Details of the user.</DialogDescription>
         </DialogHeader>
-        <div className="flex flex-col">
+        <div className="flex flex-col gap-1.5">
           <div>
             <Label>Name</Label>
             <span className="block text-muted-foreground">
-              {data?.brand?.name}
+              {data?.user?.name}
+            </span>
+          </div>
+          <div>
+            <Label>Created Date</Label>
+            <span className="block text-muted-foreground">
+              {data?.user?.createdAt
+                ? format(Number(data.user.createdAt), "PPpp")
+                : "-"}
+            </span>
+          </div>
+          <div>
+            <Label>Updated Date</Label>
+            <span className="block text-muted-foreground">
+              {data?.user?.updatedAt
+                ? format(Number(data.user.updatedAt), "PPpp")
+                : "-"}
             </span>
           </div>
         </div>
