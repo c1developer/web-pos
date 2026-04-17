@@ -31,6 +31,8 @@ const GET_USER = gql`
   }
 `
 
+// FIXME: This component doesn't work properly.
+
 export default function RowViewDialog({ _id, open, setOpen }: Props) {
   console.log("check")
   const { data }: any = useQuery(GET_USER, {
