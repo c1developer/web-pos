@@ -16,6 +16,9 @@ export const client = new ApolloClient({
       Register: {
         keyFields: ["_id"],
       },
+      ProductType: {
+        keyFields: ["_id"],
+      },
     },
   }),
 })

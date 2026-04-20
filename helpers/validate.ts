@@ -31,5 +31,5 @@ export const checkSchema =
 export const validate =
   // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
   (...v: Function[]) =>
-  (resolver: any) =>
-    v.reduceRight((acc, fn) => fn(acc), resolver)
+    (resolver: any) =>
+      v.reduceRight((acc, fn) => fn(acc), resolver)

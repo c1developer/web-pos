@@ -15,7 +15,14 @@ import { Button } from "@/components/ui/button"
 import { useForm } from "@tanstack/react-form"
 import { registerSchema } from "@/validators/register.validator"
 import { toast } from "sonner"
-import { Field, FieldError, FieldLabel, FieldSet } from "@/components/ui/field"
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+  FieldSet,
+} from "@/components/ui/field"
 import { InputGroup, InputGroupInput } from "@/components/ui/input-group"
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import {
@@ -34,7 +41,17 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command"
-import { IOption } from "@/types/shared.type"
+import { Day, IOption } from "@/types/shared.type"
+import { Switch } from "@/components/ui/switch"
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import timeOptions from "./timeOptions"
 
 const CREATE_REGISTER = gql`
   mutation CreateRegister($input: RegisterInput!) {
@@ -140,9 +157,9 @@ export default function RegisterFormDialog({ _id, onClose, outlet }: Props) {
   const form = useForm({
     defaultValues: {
       name: "",
+      schedule: [] as any,
       prefix: "",
       outlet: outlet || "",
-      schedule: [],
     },
     validators: {
       onSubmit: ({ formApi, value }: any) => {
@@ -163,6 +180,13 @@ export default function RegisterFormDialog({ _id, onClose, outlet }: Props) {
         try {
           const payload = {
             name: value.name,
+            outlet: value.outlet,
+            prefix: value.prefix,
+            schedule: value.schedule.map((s: any) => ({
+              day: s.day,
+              openingTime: s.openingTime,
+              closingTime: s.closingTime,
+            })),
           }
 
           const result: any = isUpdate
@@ -202,8 +226,9 @@ export default function RegisterFormDialog({ _id, onClose, outlet }: Props) {
       form.setFieldValue("name", data.register.name)
       form.setFieldValue("prefix", data.register.prefix)
       form.setFieldValue("outlet", data.register.outlet._id)
+      form.setFieldValue("schedule", data.register.schedule || [])
     }
-  }, [data, form])
+  }, [data, form, outlet])
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -264,7 +289,7 @@ export default function RegisterFormDialog({ _id, onClose, outlet }: Props) {
                                     (o: IOption) =>
                                       o.value === field.state.value.toString()
                                   )?.label
-                                : `Filter ${field.name}`}
+                                : `Select ${field.name}`}
                               <CaretDownIcon />
                             </Button>
                           </ButtonGroup>
@@ -354,6 +379,156 @@ export default function RegisterFormDialog({ _id, onClose, outlet }: Props) {
                           aria-invalid={isInvalid}
                         />
                       </InputGroup>
+                      {isInvalid && (
+                        <FieldError errors={field.state.meta.errors} />
+                      )}
+                    </Field>
+                  )
+                }}
+              </form.Field>
+              <form.Field name="schedule">
+                {(field) => {
+                  const isInvalid =
+                    field.state.meta.isTouched && !field.state.meta.isValid
+                  return (
+                    <Field data-invalid={isInvalid}>
+                      <FieldLabel htmlFor={field.name}>Schedule</FieldLabel>
+                      <FieldContent className="flex flex-col gap-1.5">
+                        <div className="grid grid-cols-3 gap-1.5">
+                          <span className="block text-center font-medium">
+                            Day
+                          </span>
+                          <span className="block text-center font-medium">
+                            Opening
+                          </span>
+                          <span className="block text-center font-medium">
+                            Closing
+                          </span>
+                        </div>
+                        {Object.values(Day).map((day) => (
+                          <div className="grid grid-cols-3 gap-1.5" key={day}>
+                            <div className="flex items-center gap-1.5">
+                              <Switch
+                                checked={
+                                  !!field.state.value.find(
+                                    (s: any) => s.day === day
+                                  )
+                                }
+                                className={cn(
+                                  (day === Day.SUNDAY ||
+                                    day === Day.SATURDAY) &&
+                                    "data-[state=checked]:bg-sky-700"
+                                )}
+                                onCheckedChange={(checked) => {
+                                  if (checked)
+                                    field.setValue((prev: any) => [
+                                      ...prev,
+                                      {
+                                        day,
+                                        openingTime: "",
+                                        closingTime: "",
+                                      },
+                                    ])
+                                  else
+                                    field.setValue((prev: any) =>
+                                      prev.filter((s: any) => s.day !== day)
+                                    )
+                                }}
+                              />
+                              <FieldLabel
+                                className={cn(
+                                  "capitalize",
+                                  (day === Day.SUNDAY ||
+                                    day === Day.SATURDAY) &&
+                                    "text-sky-700"
+                                )}
+                              >
+                                {day.toLocaleLowerCase()}
+                              </FieldLabel>
+                            </div>
+                            <Select
+                              onValueChange={(val) => {
+                                field.setValue((prev: any) =>
+                                  prev.map((s: any) =>
+                                    s.day === day
+                                      ? { ...s, openingTime: val }
+                                      : s
+                                  )
+                                )
+                              }}
+                              value={
+                                field.state.value.find(
+                                  (s: any) => s.day === day
+                                )?.openingTime || ""
+                              }
+                            >
+                              <SelectTrigger
+                                size="sm"
+                                className="w-full"
+                                disabled={
+                                  !field.state.value.find(
+                                    (s: any) => s.day === day
+                                  )
+                                }
+                              >
+                                <SelectValue placeholder="Time Slot" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectGroup>
+                                  {timeOptions.map((option) => (
+                                    <SelectItem
+                                      key={option.value}
+                                      value={option.value}
+                                    >
+                                      {option.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectGroup>
+                              </SelectContent>
+                            </Select>
+                            <Select
+                              onValueChange={(val) => {
+                                field.setValue((prev: any) =>
+                                  prev.map((s: any) =>
+                                    s.day === day
+                                      ? { ...s, closingTime: val }
+                                      : s
+                                  )
+                                )
+                              }}
+                              value={
+                                field.state.value.find(
+                                  (s: any) => s.day === day
+                                )?.closingTime || ""
+                              }
+                            >
+                              <SelectTrigger
+                                size="sm"
+                                className="w-full"
+                                disabled={
+                                  !field.state.value.find(
+                                    (s: any) => s.day === day
+                                  )
+                                }
+                              >
+                                <SelectValue placeholder="Time Slot" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectGroup>
+                                  {timeOptions.map((option) => (
+                                    <SelectItem
+                                      key={option.value}
+                                      value={option.value}
+                                    >
+                                      {option.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectGroup>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        ))}
+                      </FieldContent>
                       {isInvalid && (
                         <FieldError errors={field.state.meta.errors} />
                       )}

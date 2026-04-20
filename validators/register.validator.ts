@@ -9,23 +9,23 @@ export const registerSchema = z.object({
   name: z.string().nonoptional("Name is required"),
   outlet: z.string().nonempty("Outlet is required"),
   prefix: z.string().nonempty("Prefix is required"),
-  schedule: z
-    .array(
-      z.object({
-        day: z
-          .enum(Object.values(Day), "Invalid day")
-          .nonoptional("Day is required"),
-        openingTime: z
-          .string()
-          .nonempty("Opening time is required")
-          .regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/, "Opening time must be valid."),
-        closingTime: z
-          .string()
-          .nonempty("Closing time is required")
-          .regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/, "Closing time must be valid."),
-      })
-    )
-    .default([]),
+  // schedule: z
+  //   .array(
+  //     z.object({
+  //       day: z
+  //         .enum(Object.values(Day), "Invalid day")
+  //         .nonoptional("Day is required"),
+  //       openingTime: z
+  //         .string()
+  //         .nonempty("Opening time is required")
+  //         .regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/, "Opening time must be valid."),
+  //       closingTime: z
+  //         .string()
+  //         .nonempty("Closing time is required")
+  //         .regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/, "Closing time must be valid."),
+  //     })
+  //   )
+  //   .default([]),
 })
 // .superRefine(async (data, ctx) => {
 //   const isUpdate = !!data._id

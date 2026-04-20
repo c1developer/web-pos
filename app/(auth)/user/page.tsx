@@ -30,6 +30,14 @@ import StatusDialog from "./dialogs/status"
 import Image from "next/image"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import RowViewDialog from "./dialogs/row-view"
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 const GET_USERS = gql`
   query UserTable(
@@ -343,23 +351,45 @@ export default function Page() {
           {page.current === page.max ? total : page.current * rows} out of{" "}
           {total} result{total === 1 ? "" : "s"}.
         </span>
-        <ButtonGroup>
-          <Button
-            onClick={onPrevPage}
-            disabled={page.current === 1}
-            variant="outline"
+        <div className="flex gap-1.5">
+          <Select
+            value={rows.toString()}
+            onValueChange={(value) => {
+              setRows(Number(value))
+              resetPage()
+            }}
           >
-            Prev
-          </Button>
-          <ButtonGroupText>{`Page ${page.current} of ${page.max}`}</ButtonGroupText>
-          <Button
-            onClick={onNextPage}
-            disabled={page.current === page.max}
-            variant="outline"
-          >
-            Next
-          </Button>
-        </ButtonGroup>
+            <SelectTrigger className="w-18">
+              <SelectValue placeholder="Rows" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="25">25</SelectItem>
+                <SelectItem value="100">100</SelectItem>
+                <SelectItem value="250">250</SelectItem>
+                <SelectItem value="500">500</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+          <ButtonGroup>
+            <Button
+              onClick={onPrevPage}
+              disabled={page.current === 1}
+              variant="outline"
+            >
+              Prev
+            </Button>
+            <ButtonGroupText>{`Page ${page.current} of ${page.max}`}</ButtonGroupText>
+            <Button
+              onClick={onNextPage}
+              disabled={page.current === page.max}
+              variant="outline"
+            >
+              Next
+            </Button>
+          </ButtonGroup>
+        </div>
       </div>
       <DataTable
         loading={loading}
