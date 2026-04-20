@@ -14,16 +14,23 @@ import { format } from "date-fns"
 import gql from "graphql-tag"
 
 type Props = {
-  _id: string
-  open: boolean
-  setOpen: (open: boolean) => void
+  _id?: string
+  open?: boolean
+  setOpen?: (open: boolean) => void
+  onClose?: () => void
 }
 
 const GET_USER = gql`
   query User($_id: ID!) {
     user(_id: $_id) {
       _id
-      fullName
+      name
+      surname
+      displayName
+      email
+      username
+      role
+      pin
       isActive
       createdAt
       updatedAt
@@ -31,10 +38,7 @@ const GET_USER = gql`
   }
 `
 
-// FIXME: This component doesn't work properly.
-
-export default function RowViewDialog({ _id, open, setOpen }: Props) {
-  console.log("check")
+export default function RowViewDialog({ _id, open, setOpen, onClose }: Props) {
   const { data }: any = useQuery(GET_USER, {
     variables: {
       _id,
@@ -44,8 +48,13 @@ export default function RowViewDialog({ _id, open, setOpen }: Props) {
     skip: !_id || !open,
   })
 
+  const handleClose = () => {
+    setOpen?.(false)
+    onClose?.()
+  }
+
   return (
-    <Dialog modal open={open} onOpenChange={setOpen}>
+    <Dialog modal open={open} onOpenChange={handleClose}>
       <DialogContent
         onOpenAutoFocus={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
@@ -60,6 +69,42 @@ export default function RowViewDialog({ _id, open, setOpen }: Props) {
             <Label>Name</Label>
             <span className="block text-muted-foreground">
               {data?.user?.name}
+            </span>
+          </div>
+          <div>
+            <Label>Surname</Label>
+            <span className="block text-muted-foreground">
+              {data?.user?.surname}
+            </span>
+          </div>
+          <div>
+            <Label>Display Name</Label>
+            <span className="block text-muted-foreground">
+              {data?.user?.displayName}
+            </span>
+          </div>
+          <div>
+            <Label>Email</Label>
+            <span className="block text-muted-foreground">
+              {data?.user?.email}
+            </span>
+          </div>
+          <div>
+            <Label>Username</Label>
+            <span className="block text-muted-foreground">
+              {data?.user?.username}
+            </span>
+          </div>
+          <div>
+            <Label>Role</Label>
+            <span className="block text-muted-foreground">
+              {data?.user?.role}
+            </span>
+          </div>
+          <div>
+            <Label>PIN</Label>
+            <span className="block text-muted-foreground">
+              {data?.user?.pin}
             </span>
           </div>
           <div>

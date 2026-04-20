@@ -7,22 +7,23 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog"
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import { Label } from "@/components/ui/label"
 import { useQuery } from "@apollo/client/react"
-import { format } from "date-fns"
 import gql from "graphql-tag"
+import React, { useState } from "react"
+import { format } from "date-fns"
 
 type Props = {
-  _id?: string
-  open?: boolean
-  setOpen?: (open: boolean) => void
-  onClose?: () => void
+  _id: string
+  onClose: () => void
 }
 
-const GET_BRAND = gql`
-  query Brand($_id: ID!) {
-    brand(_id: $_id) {
+const GET_OUTLET = gql`
+  query Outlet($_id: ID!) {
+    outlet(_id: $_id) {
       _id
       name
       isActive
@@ -32,53 +33,53 @@ const GET_BRAND = gql`
   }
 `
 
-export default function RowViewDialog({ _id, open, setOpen, onClose }: Props) {
-  const { data }: any = useQuery(GET_BRAND, {
+export default function ViewDialog({ _id, onClose }: Props) {
+  const [open, setOpen] = useState(false)
+  const { data }: any = useQuery(GET_OUTLET, {
     variables: {
       _id,
     },
-    fetchPolicy: "cache-and-network",
+    fetchPolicy: "network-only",
     nextFetchPolicy: "cache-first",
     skip: !_id || !open,
   })
 
-  const handleClose = () => {
-    setOpen?.(false)
-    onClose?.()
-  }
-
   return (
-    <Dialog modal open={open} onOpenChange={handleClose}>
+    <Dialog modal open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+          View
+        </DropdownMenuItem>
+      </DialogTrigger>
       <DialogContent
         onOpenAutoFocus={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
         showCloseButton={false}
       >
         <DialogHeader>
-          <DialogTitle>View Brand</DialogTitle>
-          <DialogDescription>Details of the brand.</DialogDescription>
+          <DialogTitle>View Outlet</DialogTitle>
+          <DialogDescription>Details of the outlet.</DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-1.5">
           <div>
             <Label>Name</Label>
             <span className="block text-muted-foreground">
-              {data?.brand?.name}
+              {data?.outlet?.name}
             </span>
           </div>
-
           <div>
             <Label>Created Date</Label>
             <span className="block text-muted-foreground">
-              {data?.brand?.createdAt
-                ? format(Number(data.brand.createdAt), "PPpp")
+              {data?.outlet?.createdAt
+                ? format(Number(data.outlet.createdAt), "PPpp")
                 : "-"}
             </span>
           </div>
           <div>
             <Label>Updated Date</Label>
             <span className="block text-muted-foreground">
-              {data?.brand?.updatedAt
-                ? format(Number(data.brand.updatedAt), "PPpp")
+              {data?.outlet?.updatedAt
+                ? format(Number(data.outlet.updatedAt), "PPpp")
                 : "-"}
             </span>
           </div>

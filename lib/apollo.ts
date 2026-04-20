@@ -10,6 +10,12 @@ export const client = new ApolloClient({
       User: {
         keyFields: ["_id"],
       },
-    }
+      Outlet: {
+        keyFields: ["_id"],
+      },
+      Register: {
+        keyFields: ["_id"],
+      },
+    },
   }),
 })

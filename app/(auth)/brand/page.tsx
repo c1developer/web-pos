@@ -27,6 +27,15 @@ import {
 import ViewDialog from "./dialogs/view"
 import SortHeader from "@/components/custom/sort-header"
 import StatusDialog from "./dialogs/status"
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import RowViewDialog from "./dialogs/row-view"
 
 const GET_BRANDS = gql`
   query BrandTable(
@@ -133,6 +142,7 @@ export default function Page() {
     const hasNextPage = result?.brandTable?.pageInfo?.hasNextPage || false
     const endCursor = result?.brandTable?.pageInfo?.endCursor || null
 
+    // eslint-disable-next-line react-hooks/set-state-in-render
     setPage((prev) => ({
       ...prev,
       max: result?.brandTable?.pages || 1,
@@ -294,29 +304,52 @@ export default function Page() {
           {page.current === page.max ? total : page.current * rows} out of{" "}
           {total} result{total === 1 ? "" : "s"}.
         </span>
-        <ButtonGroup>
-          <Button
-            onClick={onPrevPage}
-            disabled={page.current === 1}
-            variant="outline"
+        <div className="flex gap-1.5">
+          <Select
+            value={rows.toString()}
+            onValueChange={(value) => {
+              setRows(Number(value))
+              resetPage()
+            }}
           >
-            Prev
-          </Button>
-          <ButtonGroupText>{`Page ${page.current} of ${page.max}`}</ButtonGroupText>
-          <Button
-            onClick={onNextPage}
-            disabled={page.current === page.max}
-            variant="outline"
-          >
-            Next
-          </Button>
-        </ButtonGroup>
+            <SelectTrigger className="w-18">
+              <SelectValue placeholder="Rows" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="25">25</SelectItem>
+                <SelectItem value="100">100</SelectItem>
+                <SelectItem value="250">250</SelectItem>
+                <SelectItem value="500">500</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+          <ButtonGroup>
+            <Button
+              onClick={onPrevPage}
+              disabled={page.current === 1}
+              variant="outline"
+            >
+              Prev
+            </Button>
+            <ButtonGroupText>{`Page ${page.current} of ${page.max}`}</ButtonGroupText>
+            <Button
+              onClick={onNextPage}
+              disabled={page.current === page.max}
+              variant="outline"
+            >
+              Next
+            </Button>
+          </ButtonGroup>
+        </div>
       </div>
       <DataTable
         loading={loading}
         columns={columns}
         data={nodes.slice((page.current - 1) * rows, page.current * rows)}
         actionsColumn={<Actions />}
+        rowView={<RowViewDialog />}
       />
     </div>
   )

@@ -29,6 +29,7 @@ import SortHeader from "@/components/custom/sort-header"
 import StatusDialog from "./dialogs/status"
 import Image from "next/image"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import RowViewDialog from "./dialogs/row-view"
 
 const GET_USERS = gql`
   query UserTable(
@@ -137,6 +138,7 @@ export default function Page() {
     const hasNextPage = result?.userTable?.pageInfo?.hasNextPage || false
     const endCursor = result?.userTable?.pageInfo?.endCursor || null
 
+    // eslint-disable-next-line react-hooks/set-state-in-render
     setPage((prev) => ({
       ...prev,
       max: result?.userTable?.pages || 1,
@@ -364,6 +366,7 @@ export default function Page() {
         columns={columns}
         data={nodes.slice((page.current - 1) * rows, page.current * rows)}
         actionsColumn={<Actions />}
+        rowView={<RowViewDialog />}
       />
     </div>
   )

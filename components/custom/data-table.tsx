@@ -1,4 +1,10 @@
-import React, { ReactNode, useState } from "react"
+import React, {
+  cloneElement,
+  createElement,
+  ReactElement,
+  ReactNode,
+  useState,
+} from "react"
 import {
   ColumnDef,
   flexRender,
@@ -25,12 +31,12 @@ type Props<TData, TValue> = {
 }
 
 export default function DataTable<TData, TValue>({
-  loading = false,
   columns,
   data,
   actionsColumn,
   rowView,
 }: Props<TData, TValue>) {
+  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data,
     columns,
@@ -40,9 +46,20 @@ export default function DataTable<TData, TValue>({
   const [viewId, setViewId] = useState<string | null>(null)
   const [openView, setOpenView] = useState(false)
 
+  const onCloseView = () => {
+    setViewId(null)
+    setOpenView(false)
+  }
+
   return (
     <>
-      <RowViewDialog _id={viewId!} open={openView} setOpen={setOpenView} />
+      {rowView &&
+        cloneElement(rowView as ReactElement<any>, {
+          _id: viewId,
+          open: openView,
+          setOpen: setOpenView,
+          onClose: onCloseView,
+        })}
       <Table className="border">
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
@@ -94,10 +111,16 @@ export default function DataTable<TData, TValue>({
                   <TableCell
                     key={cell.id}
                     className={cn(
-                      cell.column.id !== "select" && "cursor-pointer"
+                      cell.column.id !== "select" &&
+                        cell.column.id !== "registers" &&
+                        "cursor-pointer"
                     )}
                     onClick={() => {
-                      if (cell.column.id === "select") return
+                      if (
+                        cell.column.id === "select" ||
+                        cell.column.id === "registers"
+                      )
+                        return
                       setViewId((row.original as any)._id)
                       setOpenView((prev) => !prev)
                     }}

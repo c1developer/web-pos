@@ -7,7 +7,7 @@ import {
   InputGroupButton,
   InputGroupInput,
 } from "../ui/input-group"
-import { Check, CheckIcon, EraserIcon } from "@phosphor-icons/react"
+import { CheckIcon, EraserIcon } from "@phosphor-icons/react"
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
 import { Button } from "../ui/button"
 import { cn } from "@/lib/utils"
@@ -21,7 +21,6 @@ import {
   CommandList,
   CommandItem,
 } from "../ui/command"
-import { Label } from "../ui/label"
 import {
   Select,
   SelectContent,

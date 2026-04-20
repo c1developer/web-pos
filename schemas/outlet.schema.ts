@@ -1,9 +1,15 @@
 import { gql } from "graphql-tag"
 
 export const outletSchema = gql`
+  type OutletRegister {
+    _id: ID
+    name: String
+  }
+
   type Outlet {
     _id: ID
     name: String
+    registers: [OutletRegister]
     isActive: Boolean
     createdAt: String
     updatedAt: String
@@ -19,6 +25,7 @@ export const outletSchema = gql`
   type OutletNode {
     _id: ID!
     name: String
+    registers: [OutletRegister]
     isActive: Boolean
   }
 

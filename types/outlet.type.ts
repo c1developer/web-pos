@@ -13,5 +13,9 @@ export interface IOutletInput {
 export interface IOutletNode {
   _id: Types.ObjectId | string
   name: string
+  registers: {
+    _id: Types.ObjectId | string
+    name: string
+  }[]
   isActive: boolean
 }

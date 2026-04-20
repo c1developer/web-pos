@@ -20,11 +20,15 @@ type Props = {
   onClose?: () => void
 }
 
-const GET_BRAND = gql`
-  query Brand($_id: ID!) {
-    brand(_id: $_id) {
+const GET_OUTLET = gql`
+  query Outlet($_id: ID!) {
+    outlet(_id: $_id) {
       _id
       name
+      registers {
+        _id
+        name
+      }
       isActive
       createdAt
       updatedAt
@@ -33,7 +37,7 @@ const GET_BRAND = gql`
 `
 
 export default function RowViewDialog({ _id, open, setOpen, onClose }: Props) {
-  const { data }: any = useQuery(GET_BRAND, {
+  const { data }: any = useQuery(GET_OUTLET, {
     variables: {
       _id,
     },
@@ -55,30 +59,37 @@ export default function RowViewDialog({ _id, open, setOpen, onClose }: Props) {
         showCloseButton={false}
       >
         <DialogHeader>
-          <DialogTitle>View Brand</DialogTitle>
-          <DialogDescription>Details of the brand.</DialogDescription>
+          <DialogTitle>View Outlet</DialogTitle>
+          <DialogDescription>Details of the outlet.</DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-1.5">
           <div>
             <Label>Name</Label>
             <span className="block text-muted-foreground">
-              {data?.brand?.name}
+              {data?.outlet?.name}
             </span>
           </div>
-
+          {data?.outlet?.registers && data.outlet.registers.length > 0 && (
+            <div>
+              <Label>Registers</Label>
+              <div className="list-inside list-disc text-muted-foreground">
+                {data.outlet.registers.map((reg: any) => reg.name).join(", ")}
+              </div>
+            </div>
+          )}
           <div>
             <Label>Created Date</Label>
             <span className="block text-muted-foreground">
-              {data?.brand?.createdAt
-                ? format(Number(data.brand.createdAt), "PPpp")
+              {data?.outlet?.createdAt
+                ? format(Number(data.outlet.createdAt), "PPpp")
                 : "-"}
             </span>
           </div>
           <div>
             <Label>Updated Date</Label>
             <span className="block text-muted-foreground">
-              {data?.brand?.updatedAt
-                ? format(Number(data.brand.updatedAt), "PPpp")
+              {data?.outlet?.updatedAt
+                ? format(Number(data.outlet.updatedAt), "PPpp")
                 : "-"}
             </span>
           </div>

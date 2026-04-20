@@ -8,14 +8,9 @@ import { flatten } from "../helpers/flatten"
 import { checkSchema, validate } from "../helpers/validate"
 import { outletSchema } from "../validators/outlet.validator"
 import { isISOString } from "../helpers/isoString"
+import Register from "../models/register.model"
 
 const CURSOR_TYPE = "outlet"
-
-const generateNode = (outlet: any) => ({
-  _id: outlet._id,
-  name: outlet.name,
-  isActive: outlet.isActive,
-})
 
 export const outletResolver = {
   Query: {
@@ -23,7 +18,10 @@ export const outletResolver = {
       try {
         const outlet = await Outlet.findById(_id).lean()
         if (!outlet) throw new GraphQLError("Outlet not found")
-        return outlet
+        const registers = await Register.find({ outlet: _id })
+          .select("_id name")
+          .lean()
+        return { ...outlet, registers }
       } catch (error) {
         throw error
       }
@@ -65,6 +63,7 @@ export const outletResolver = {
 
         const sortKey = sort?.key || "_id"
         const sortOrder = sort?.order === "ASC" ? 1 : -1
+        const total = await Outlet.countDocuments(matchStage)
 
         if (after) {
           const { id, type, value } = fromCursor(after)
@@ -92,6 +91,28 @@ export const outletResolver = {
         }
 
         const pipeline: PipelineStage[] = [
+          {
+            $lookup: {
+              from: "registers",
+              localField: "_id",
+              foreignField: "outlet",
+              as: "registers",
+            },
+          },
+          {
+            $addFields: {
+              registers: {
+                $map: {
+                  input: "$registers",
+                  as: "reg",
+                  in: {
+                    _id: "$$reg._id",
+                    name: "$$reg.name",
+                  },
+                },
+              },
+            },
+          },
           { $match: matchStage },
           {
             $sort: { [sortKey]: sortOrder, _id: sortOrder },
@@ -100,37 +121,27 @@ export const outletResolver = {
           {
             $project: {
               name: 1,
+              registers: 1,
               isActive: 1,
             },
           },
         ]
 
-        const [result, total] = await Promise.all([
-          Outlet.aggregate(pipeline),
-          Outlet.aggregate([
-            ...pipeline.filter(
-              (stage) =>
-                !("$limit" in stage) &&
-                !("$sort" in stage) &&
-                !("$project" in stage)
-            ),
-            { $count: "total" },
-          ]).then((res) => (res[0] ? res[0].total : 0)),
-        ])
-
+        const result = await Outlet.aggregate(pipeline)
         const sliced = result.slice(0, first)
+        const edges = sliced.map((edge) => ({
+          node: edge,
+          cursor: toCursor({
+            type: CURSOR_TYPE,
+            id: edge._id.toString(),
+            value: edge[sortKey],
+          }),
+        }))
 
         return {
           total,
           pages: Math.ceil(total / first),
-          edges: sliced.map((edge) => ({
-            node: edge,
-            cursor: toCursor({
-              id: edge._id.toString(),
-              type: CURSOR_TYPE,
-              value: edge[sortKey],
-            }),
-          })),
+          edges,
           pageInfo: {
             endCursor: sliced.length
               ? toCursor({
