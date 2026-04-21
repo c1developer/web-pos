@@ -60,15 +60,19 @@ const productItems = [
 const reportItems = [
   {
     label: "Customers",
-    url: "/customer",
+    url: "/reports/customers",
   },
   {
     label: "Payments",
-    url: "/payment",
+    url: "/reports/payments",
   },
 ]
 
 const storeItems = [
+  {
+    label: "Customers",
+    url: "/customer",
+  },
   {
     label: "Users",
     url: "/user",

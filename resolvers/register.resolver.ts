@@ -15,7 +15,9 @@ export const registerResolver = {
   Query: {
     register: async (_: any, { _id }: any) => {
       try {
-        const register = await Register.findById(_id).populate("paymentMethods").lean()
+        const register = await Register.findById(_id)
+          .populate("paymentMethods")
+          .lean()
         if (!register) throw new GraphQLError("Register not found")
         return register
       } catch (error) {
@@ -30,11 +32,16 @@ export const registerResolver = {
         const matchStage: Record<string, any> = {}
 
         if (search)
-          matchStage.$or = [{ name: { $regex: search, $options: "i" } }]
+          matchStage.$or = [
+            { name: { $regex: search, $options: "i" } },
+            { outletName: { $regex: search, $options: "i" } },
+            { prefix: { $regex: search, $options: "i" } },
+          ]
 
         if (filter && filter.length > 0)
           matchStage.$and = filter.map(({ type, key, value }) => {
             switch (type) {
+              case "SELECT":
               case "TEXT":
                 return { [key]: { $regex: value, $options: "i" } }
               case "NUMBER":

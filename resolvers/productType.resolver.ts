@@ -37,11 +37,15 @@ export const productTypeResolver = {
         const matchStage: Record<string, any> = {}
 
         if (search)
-          matchStage.$or = [{ name: { $regex: search, $options: "i" } }]
+          matchStage.$or = [
+            { name: { $regex: search, $options: "i" } },
+            { "parent.name": { $regex: search, $options: "i" } },
+          ]
 
         if (filter && filter.length > 0)
           matchStage.$and = filter.map(({ type, key, value }) => {
             switch (type) {
+              case "SELECT":
               case "TEXT":
                 return { [key]: { $regex: value, $options: "i" } }
               case "NUMBER":

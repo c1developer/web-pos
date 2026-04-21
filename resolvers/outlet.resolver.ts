@@ -39,6 +39,7 @@ export const outletResolver = {
         if (filter && filter.length > 0)
           matchStage.$and = filter.map(({ type, key, value }) => {
             switch (type) {
+              case "SELECT":
               case "TEXT":
                 return { [key]: { $regex: value, $options: "i" } }
               case "NUMBER":

@@ -21,11 +21,12 @@ type Props = {
   onClose: () => void
 }
 
-const GET_BRAND = gql`
-  query Brand($_id: ID!) {
-    brand(_id: $_id) {
+const GET_CUSTOMER = gql`
+  query Customer($_id: ID!) {
+    customer(_id: $_id) {
       _id
       name
+      email
       isActive
       createdAt
       updatedAt
@@ -35,7 +36,7 @@ const GET_BRAND = gql`
 
 export default function ViewDialog({ _id, onClose }: Props) {
   const [open, setOpen] = useState(false)
-  const { data }: any = useQuery(GET_BRAND, {
+  const { data }: any = useQuery(GET_CUSTOMER, {
     variables: {
       _id,
     },
@@ -57,29 +58,35 @@ export default function ViewDialog({ _id, onClose }: Props) {
         showCloseButton={false}
       >
         <DialogHeader>
-          <DialogTitle>View Brand</DialogTitle>
-          <DialogDescription>Details of the brand.</DialogDescription>
+          <DialogTitle>View Customer</DialogTitle>
+          <DialogDescription>Details of the customer.</DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-1.5">
           <div>
             <Label>Name</Label>
             <span className="block text-muted-foreground">
-              {data?.brand?.name}
+              {data?.customer?.name}
+            </span>
+          </div>
+          <div>
+            <Label>Email</Label>
+            <span className="block text-muted-foreground">
+              {data?.customer?.email}
             </span>
           </div>
           <div>
             <Label>Created Date</Label>
             <span className="block text-muted-foreground">
-              {data?.brand?.createdAt
-                ? format(Number(data.brand.createdAt), "PPpp")
+              {data?.customer?.createdAt
+                ? format(Number(data.customer.createdAt), "PPpp")
                 : "-"}
             </span>
           </div>
           <div>
             <Label>Updated Date</Label>
             <span className="block text-muted-foreground">
-              {data?.brand?.updatedAt
-                ? format(Number(data.brand.updatedAt), "PPpp")
+              {data?.customer?.updatedAt
+                ? format(Number(data.customer.updatedAt), "PPpp")
                 : "-"}
             </span>
           </div>

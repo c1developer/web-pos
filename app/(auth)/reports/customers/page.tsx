@@ -1,6 +1,5 @@
 "use client"
 import { Label } from "@/components/ui/label"
-import FormDialog from "./dialogs/form"
 import { useCallback, useMemo, useState } from "react"
 import gql from "graphql-tag"
 import { useQuery } from "@apollo/client/react"
@@ -26,7 +25,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import ViewDialog from "./dialogs/view"
 import SortHeader from "@/components/custom/sort-header"
-import StatusDialog from "./dialogs/status"
 import {
   Select,
   SelectContent,
@@ -38,14 +36,14 @@ import {
 import RowViewDialog from "./dialogs/row-view"
 
 const GET_CUSTOMERS = gql`
-  query CustomerTable(
+  query CustomerReportTable(
     $first: Int
     $after: String
     $search: String
     $filter: [Filter]
     $sort: Sort
   ) {
-    customerTable(
+    customerReportTable(
       first: $first
       after: $after
       search: $search
@@ -59,6 +57,8 @@ const GET_CUSTOMERS = gql`
         node {
           _id
           name
+          remainingAccountLimit
+          remainingStoreCredit
           isActive
         }
       }
@@ -85,15 +85,6 @@ function Actions({ row }: { row?: ICustomerNode }) {
       <DropdownMenuContent side="left" align="start">
         <ViewDialog
           _id={data?._id?.toString() || ""}
-          onClose={() => setOpen(false)}
-        />
-        <FormDialog
-          _id={data?._id?.toString()}
-          onClose={() => setOpen(false)}
-        />
-        <StatusDialog
-          _id={data?._id?.toString() || ""}
-          status={status || false}
           onClose={() => setOpen(false)}
         />
       </DropdownMenuContent>
@@ -139,19 +130,20 @@ export default function Page() {
   const { total, nodes, endCursor } = useMemo(() => {
     const result = data as any
     const nodes =
-      result?.customerTable?.edges?.map((edge: any) => edge.node) || []
-    const hasNextPage = result?.customerTable?.pageInfo?.hasNextPage || false
-    const endCursor = result?.customerTable?.pageInfo?.endCursor || null
+      result?.customerReportTable?.edges?.map((edge: any) => edge.node) || []
+    const hasNextPage =
+      result?.customerReportTable?.pageInfo?.hasNextPage || false
+    const endCursor = result?.customerReportTable?.pageInfo?.endCursor || null
 
     // eslint-disable-next-line react-hooks/set-state-in-render
     setPage((prev) => ({
       ...prev,
-      max: result?.customerTable?.pages || 1,
+      max: result?.customerReportTable?.pages || 1,
     }))
 
     return {
-      total: result?.customerTable?.total || 0,
-      pages: result?.customerTable?.pages || 0,
+      total: result?.customerReportTable?.total || 0,
+      pages: result?.customerReportTable?.pages || 0,
       nodes,
       hasNextPage,
       endCursor,
@@ -178,6 +170,62 @@ export default function Page() {
             label="Name"
             filterKey="name"
             filterType={FilterType.TEXT}
+            filter={filter}
+            onFilterChange={onFilter}
+          />
+        ),
+      },
+      {
+        id: "remainingAccountLimit",
+        header: () => (
+          <SortHeader
+            label="Account Limit"
+            sortKey="remainingAccountLimit"
+            sortState={sort}
+            onSortChange={setSort}
+          />
+        ),
+        cell: ({ row }) => (
+          <span className="font-medium">
+            {new Intl.NumberFormat("en-PH", {
+              style: "currency",
+              currency: "PHP",
+            }).format(row.original.remainingAccountLimit)}
+          </span>
+        ),
+        footer: () => (
+          <ColumnFilter
+            label="Account Limit"
+            filterKey="remainingAccountLimit"
+            filterType={FilterType.NUMBER}
+            filter={filter}
+            onFilterChange={onFilter}
+          />
+        ),
+      },
+      {
+        id: "remainingStoreCredit",
+        header: () => (
+          <SortHeader
+            label="Store Credit"
+            sortKey="remainingStoreCredit"
+            sortState={sort}
+            onSortChange={setSort}
+          />
+        ),
+        cell: ({ row }) => (
+          <span className="font-medium">
+            {new Intl.NumberFormat("en-PH", {
+              style: "currency",
+              currency: "PHP",
+            }).format(row.original.remainingStoreCredit)}
+          </span>
+        ),
+        footer: () => (
+          <ColumnFilter
+            label="Store Credit"
+            filterKey="remainingStoreCredit"
+            filterType={FilterType.NUMBER}
             filter={filter}
             onFilterChange={onFilter}
           />
@@ -237,17 +285,17 @@ export default function Page() {
         updateQuery: (prev: any, { fetchMoreResult: more }: any) => {
           if (!more) return prev
           const cursorSet = new Set([
-            ...prev.customerTable.edges.map((edge: any) => edge.cursor),
-            ...more.customerTable.edges.map((edge: any) => edge.cursor),
+            ...prev.customerReportTable.edges.map((edge: any) => edge.cursor),
+            ...more.customerReportTable.edges.map((edge: any) => edge.cursor),
           ])
           const filteredEdges = [
-            ...prev.customerTable.edges,
-            ...more.customerTable.edges,
+            ...prev.customerReportTable.edges,
+            ...more.customerReportTable.edges,
           ].filter((edge: any) => cursorSet.has(edge.cursor))
-          const pageInfo = more.customerTable.pageInfo
+          const pageInfo = more.customerReportTable.pageInfo
           return {
-            customerTable: {
-              ...more.customerTable,
+            customerReportTable: {
+              ...more.customerReportTable,
               edges: filteredEdges,
               pageInfo,
             },
@@ -276,8 +324,7 @@ export default function Page() {
   return (
     <div className="flex h-full w-full flex-col gap-1.5 p-2.5">
       <div className="flex items-center gap-1.5">
-        <Label className="text-xl font-medium">Customer</Label>
-        <FormDialog />
+        <Label className="text-xl font-medium">Customer Reports</Label>
       </div>
       <div className="flex justify-between">
         <InputGroup>

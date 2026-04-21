@@ -7,49 +7,66 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog"
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import { Label } from "@/components/ui/label"
 import { useQuery } from "@apollo/client/react"
-import { format } from "date-fns"
 import gql from "graphql-tag"
+import React, { useState } from "react"
+import { format } from "date-fns"
 
 type Props = {
-  _id?: string
-  open?: boolean
-  setOpen?: (open: boolean) => void
-  onClose?: () => void
+  _id: string
+  onClose: () => void
 }
 
 const GET_CUSTOMER = gql`
   query Customer($_id: ID!) {
-    customer(_id: $_id) {
+    customerReport(_id: $_id) {
       _id
       name
       email
-      isActive
-      createdAt
-      updatedAt
+      accountLimit {
+        current
+        max
+        history {
+          remaining
+          transacted
+          date
+        }
+      }
+      storeCredit {
+        current
+        history {
+          remaining
+          transacted
+          date
+          description
+        }
+      }
     }
   }
 `
 
-export default function RowViewDialog({ _id, open, setOpen, onClose }: Props) {
+export default function ViewDialog({ _id, onClose }: Props) {
+  const [open, setOpen] = useState(false)
   const { data }: any = useQuery(GET_CUSTOMER, {
     variables: {
       _id,
     },
-    fetchPolicy: "cache-and-network",
+    fetchPolicy: "network-only",
     nextFetchPolicy: "cache-first",
     skip: !_id || !open,
   })
 
-  const handleClose = () => {
-    setOpen?.(false)
-    onClose?.()
-  }
-
   return (
-    <Dialog modal open={open} onOpenChange={handleClose}>
+    <Dialog modal open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+          View
+        </DropdownMenuItem>
+      </DialogTrigger>
       <DialogContent
         onOpenAutoFocus={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
