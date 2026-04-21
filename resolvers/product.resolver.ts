@@ -11,20 +11,13 @@ import { isISOString } from "../helpers/isoString"
 
 const CURSOR_TYPE = "product"
 
-const generateNode = (product: any) => ({
-  _id: product._id,
-  name: product.name,
-  image: product.image,
-  sku: product.sku,
-  currentPrice: product.currentPrice,
-  isActive: product.isActive,
-})
-
 export const productResolver = {
   Query: {
     product: async (_: any, { _id }: any) => {
       try {
-        const product = await Product.findById(_id).lean()
+        const product = await Product.findById(_id)
+          .populate("type brand registers")
+          .lean()
         if (!product) throw new GraphQLError("Product not found")
         return product
       } catch (error) {
@@ -68,6 +61,7 @@ export const productResolver = {
 
         const sortKey = sort?.key || "_id"
         const sortOrder = sort?.order === "ASC" ? 1 : -1
+        const total = await Product.countDocuments(matchStage)
 
         if (after) {
           const { id, type, value } = fromCursor(after)
@@ -111,32 +105,21 @@ export const productResolver = {
           },
         ]
 
-        const [result, total] = await Promise.all([
-          Product.aggregate(pipeline),
-          Product.aggregate([
-            ...pipeline.filter(
-              (stage) =>
-                !("$limit" in stage) &&
-                !("$sort" in stage) &&
-                !("$project" in stage)
-            ),
-            { $count: "total" },
-          ]).then((res) => (res[0] ? res[0].total : 0)),
-        ])
-
+        const result = await Product.aggregate(pipeline)
         const sliced = result.slice(0, first)
+        const edges = sliced.map((edge) => ({
+          node: edge,
+          cursor: toCursor({
+            type: CURSOR_TYPE,
+            id: edge._id.toString(),
+            value: edge[sortKey],
+          }),
+        }))
 
         return {
           total,
           pages: Math.ceil(total / first),
-          edges: sliced.map((edge) => ({
-            node: edge,
-            cursor: toCursor({
-              id: edge._id.toString(),
-              type: CURSOR_TYPE,
-              value: edge[sortKey],
-            }),
-          })),
+          edges,
           pageInfo: {
             endCursor: sliced.length
               ? toCursor({

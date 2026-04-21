@@ -22,6 +22,7 @@ export const registerSchema = gql`
     name: String
     outlet: Outlet
     prefix: String
+    paymentMethods: [PaymentMethod]
     schedule: [ScheduleItem]
     isOpen: Boolean
     isActive: Boolean
@@ -60,6 +61,7 @@ export const registerSchema = gql`
     name: String
     outlet: ID
     prefix: String
+    paymentMethods: [ID]
     schedule: [ScheduleItemInput]
   }
 

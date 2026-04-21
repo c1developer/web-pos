@@ -14,6 +14,7 @@ export interface IRegister {
   outlet: Types.ObjectId | string | IOutlet
   prefix: string
   schedule: IScheduleItem[]
+  paymentMethods: (Types.ObjectId | string)[]
   isOpen: boolean
   isActive: boolean
 }
@@ -21,6 +22,8 @@ export interface IRegister {
 export interface IRegisterInput {
   name: string
   outlet: Types.ObjectId | string
+  paymentMethods: (Types.ObjectId | string)[]
+  schedule: IScheduleItem[]
   prefix: string
 }
 

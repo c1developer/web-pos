@@ -1,28 +1,28 @@
 import { GraphQLError } from "graphql"
-import Register from "../models/register.model"
+import PaymentMethod from "../models/paymentMethod.model"
 import { startOfDay, endOfDay } from "date-fns"
 import { Types, type PipelineStage } from "mongoose"
 import type { IDataTableArgs } from "../types/shared.type"
 import { fromCursor, toCursor } from "../helpers/cursor"
 import { flatten } from "../helpers/flatten"
 import { checkSchema, validate } from "../helpers/validate"
-import { registerSchema } from "../validators/register.validator"
+import { paymentMethodSchema } from "../validators/paymentMethod.validator"
 import { isISOString } from "../helpers/isoString"
 
-const CURSOR_TYPE = "register"
+const CURSOR_TYPE = "payment_method"
 
-export const registerResolver = {
+export const paymentMethodResolver = {
   Query: {
-    register: async (_: any, { _id }: any) => {
+    paymentMethod: async (_: any, { _id }: any) => {
       try {
-        const register = await Register.findById(_id).populate("paymentMethods").lean()
-        if (!register) throw new GraphQLError("Register not found")
-        return register
+        const paymentMethod = await PaymentMethod.findById(_id).lean()
+        if (!paymentMethod) throw new GraphQLError("Payment method not found")
+        return paymentMethod
       } catch (error) {
         throw error
       }
     },
-    registerTable: async (
+    paymentMethodTable: async (
       _: any,
       { first = 10, after, search, filter, sort }: IDataTableArgs
     ) => {
@@ -36,6 +36,7 @@ export const registerResolver = {
           matchStage.$and = filter.map(({ type, key, value }) => {
             switch (type) {
               case "TEXT":
+              case "SELECT":
                 return { [key]: { $regex: value, $options: "i" } }
               case "NUMBER":
                 return { [key]: Number(value) }
@@ -59,7 +60,7 @@ export const registerResolver = {
 
         const sortKey = sort?.key || "_id"
         const sortOrder = sort?.order === "ASC" ? 1 : -1
-        const total = await Register.countDocuments(matchStage)
+        const total = await PaymentMethod.countDocuments(matchStage)
 
         if (after) {
           const { id, type, value } = fromCursor(after)
@@ -87,21 +88,6 @@ export const registerResolver = {
         }
 
         const pipeline: PipelineStage[] = [
-          {
-            $lookup: {
-              from: "outlets",
-              localField: "outlet",
-              foreignField: "_id",
-              as: "outlet",
-            },
-          },
-          {
-            $unwind: {
-              path: "$outlet",
-              preserveNullAndEmptyArrays: true,
-            },
-          },
-          { $addFields: { outletName: "$outlet.name" } },
           { $match: matchStage },
           {
             $sort: { [sortKey]: sortOrder, _id: sortOrder },
@@ -110,14 +96,13 @@ export const registerResolver = {
           {
             $project: {
               name: 1,
-              outletName: 1,
-              prefix: 1,
+              type: 1,
               isActive: 1,
             },
           },
         ]
 
-        const result = await Register.aggregate(pipeline)
+        const result = await PaymentMethod.aggregate(pipeline)
         const sliced = result.slice(0, first)
         const edges = sliced.map((edge) => ({
           node: edge,
@@ -147,16 +132,16 @@ export const registerResolver = {
         throw error
       }
     },
-    registerOptions: async () => {
+    paymentMethodOptions: async () => {
       try {
-        const registers = await Register.find({ isActive: true })
+        const paymentMethods = await PaymentMethod.find({ isActive: true })
           .select("_id name")
           .lean()
-        if (!registers || registers.length === 0)
-          throw new GraphQLError("No registers found.")
-        return registers.map((register) => ({
-          value: register._id,
-          label: register.name,
+        if (!paymentMethods || paymentMethods.length === 0)
+          throw new GraphQLError("No paymentMethods found.")
+        return paymentMethods.map((paymentMethod) => ({
+          value: paymentMethod._id,
+          label: paymentMethod.name,
         }))
       } catch (error) {
         throw error
@@ -164,36 +149,13 @@ export const registerResolver = {
     },
   },
   Mutation: {
-    createRegister: validate(checkSchema(registerSchema))(
+    createPaymentMethod: validate(checkSchema(paymentMethodSchema))(
       async (_: any, { input }: any) => {
         try {
-          const result = await Register.create(input)
-          const populatedResult = await Register.findById(result._id)
-            .populate("outlet")
-            .lean()
+          const result = await PaymentMethod.create(input)
           return {
             ok: true,
-            message: "Register created successfully.",
-            data: populatedResult,
-          }
-        } catch (error) {
-          throw error
-        }
-      }
-    ),
-    updateRegister: validate(checkSchema(registerSchema))(
-      async (_: any, { _id, input }: any) => {
-        try {
-          const result = await Register.findByIdAndUpdate(_id, flatten(input), {
-            returnDocument: "after",
-          })
-            .populate({ path: "outlet", select: "name" })
-            .lean()
-          if (!result) throw new GraphQLError("Register not found")
-
-          return {
-            ok: true,
-            message: "Register updated successfully.",
+            message: "Payment method created successfully.",
             data: result,
           }
         } catch (error) {
@@ -201,26 +163,47 @@ export const registerResolver = {
         }
       }
     ),
-    changeRegisterStatus: async (_: any, { _id }: any) => {
+    updatePaymentMethod: validate(checkSchema(paymentMethodSchema))(
+      async (_: any, { _id, input }: any) => {
+        try {
+          const result = await PaymentMethod.findByIdAndUpdate(
+            _id,
+            flatten(input),
+            {
+              returnDocument: "after",
+            }
+          ).lean()
+          if (!result) throw new GraphQLError("PaymentMethod not found")
+          return {
+            ok: true,
+            message: "Payment method updated successfully.",
+            data: result,
+          }
+        } catch (error) {
+          throw error
+        }
+      }
+    ),
+    changePaymentMethodStatus: async (_: any, { _id }: any) => {
       try {
-        const register = await Register.findById(_id).select("isActive").lean()
-        if (!register) throw new GraphQLError("Register not found")
-        const result = await Register.findByIdAndUpdate(
+        const paymentMethod = await PaymentMethod.findById(_id)
+          .select("isActive")
+          .lean()
+        if (!paymentMethod) throw new GraphQLError("PaymentMethod not found")
+        const result = await PaymentMethod.findByIdAndUpdate(
           _id,
           {
-            isActive: !register.isActive,
+            isActive: !paymentMethod.isActive,
           },
           {
             returnDocument: "after",
           }
-        )
-          .populate({ path: "outlet", select: "name" })
-          .lean()
-        if (!result) throw new GraphQLError("Register not found")
+        ).lean()
+        if (!result) throw new GraphQLError("PaymentMethod not found")
 
         return {
           ok: true,
-          message: "Register status updated successfully.",
+          message: "Payment method status updated successfully.",
           data: result,
         }
       } catch (error) {

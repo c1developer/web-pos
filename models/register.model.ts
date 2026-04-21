@@ -16,6 +16,7 @@ const Register = new Schema<IRegister>(
     name: { type: String, required: true },
     outlet: { type: Schema.Types.ObjectId, ref: "Outlet", required: true },
     prefix: { type: String, required: true },
+    paymentMethods: [{ type: Schema.Types.ObjectId, ref: "Payment_Method" }],
     schedule: { type: [ScheduleItem], default: [] },
     isOpen: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },

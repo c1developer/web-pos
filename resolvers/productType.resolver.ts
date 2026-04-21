@@ -9,7 +9,7 @@ import { checkSchema, validate } from "../helpers/validate"
 import { productTypeSchema } from "../validators/productType.validator"
 import { isISOString } from "../helpers/isoString"
 
-const CURSOR_TYPE = "productType"
+const CURSOR_TYPE = "product_type"
 
 const generateNode = (productType: any) => ({
   _id: productType._id,

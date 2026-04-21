@@ -8,6 +8,7 @@ import { brandSchema } from "./brand.schema"
 import { productTypeSchema } from "./productType.schema"
 import { productSchema } from "./product.schema"
 import { authSchema } from "./auth.schema"
+import { paymentMethodSchema } from "./paymentMethod.schema"
 
 export default mergeTypeDefs([
   authSchema,
@@ -18,4 +19,5 @@ export default mergeTypeDefs([
   brandSchema,
   productTypeSchema,
   productSchema,
+  paymentMethodSchema,
 ])

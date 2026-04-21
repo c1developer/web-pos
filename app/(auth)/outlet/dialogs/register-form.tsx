@@ -87,13 +87,20 @@ const FETCH_REGISTER_AND_OPTIONS = gql`
         openingTime
         closingTime
       }
+      paymentMethods {
+        _id
+      }
     }
   }
 `
 
 const FETCH_OPTIONS = gql`
-  query OutletOptions {
+  query Options {
     outletOptions {
+      label
+      value
+    }
+    paymentMethodOptions {
       label
       value
     }
@@ -137,7 +144,7 @@ export default function RegisterFormDialog({ _id, onClose, outlet }: Props) {
     },
   })
   const [updateRegister] = useMutation(UPDATE_REGISTER, {
-    refetchQueries: ["RegisterTable"],
+    refetchQueries: "active",
     awaitRefetchQueries: true,
   })
   const { data }: any = useQuery(FETCH_REGISTER_AND_OPTIONS, {
@@ -153,11 +160,17 @@ export default function RegisterFormDialog({ _id, onClose, outlet }: Props) {
     nextFetchPolicy: "cache-first",
     skip: !open,
   })
-  const options = optionsData?.outletOptions || []
+  const outletOptions = optionsData?.outletOptions || []
+  const paymentMethodOptions = optionsData?.paymentMethodOptions || []
+  const [openOutletCommand, setOpenOutletCommand] = useState<boolean>(false)
+  const [openPaymentMethodCommand, setOpenPaymentMethodCommand] =
+    useState<boolean>(false)
+
   const form = useForm({
     defaultValues: {
       name: "",
       schedule: [] as any,
+      paymentMethods: [] as any,
       prefix: "",
       outlet: outlet || "",
     },
@@ -187,6 +200,7 @@ export default function RegisterFormDialog({ _id, onClose, outlet }: Props) {
               openingTime: s.openingTime,
               closingTime: s.closingTime,
             })),
+            paymentMethods: value.paymentMethods || [],
           }
 
           const result: any = isUpdate
@@ -219,7 +233,6 @@ export default function RegisterFormDialog({ _id, onClose, outlet }: Props) {
         }
       }),
   })
-  const [openCommand, setOpenCommand] = useState<boolean>(false)
 
   useEffect(() => {
     if (data?.register) {
@@ -227,6 +240,12 @@ export default function RegisterFormDialog({ _id, onClose, outlet }: Props) {
       form.setFieldValue("prefix", data.register.prefix)
       form.setFieldValue("outlet", data.register.outlet._id)
       form.setFieldValue("schedule", data.register.schedule || [])
+      form.setFieldValue(
+        "paymentMethods",
+        data.register.paymentMethods
+          ? data.register.paymentMethods.map((method: any) => method._id)
+          : []
+      )
     }
   }, [data, form, outlet])
 
@@ -265,7 +284,10 @@ export default function RegisterFormDialog({ _id, onClose, outlet }: Props) {
                   return (
                     <Field data-invalid={isInvalid}>
                       <FieldLabel htmlFor={field.name}>Outlet</FieldLabel>
-                      <Popover open={openCommand} onOpenChange={setOpenCommand}>
+                      <Popover
+                        open={openOutletCommand}
+                        onOpenChange={setOpenOutletCommand}
+                      >
                         <PopoverTrigger
                           asChild
                           disabled={true}
@@ -275,7 +297,7 @@ export default function RegisterFormDialog({ _id, onClose, outlet }: Props) {
                             <Button
                               variant="outline"
                               role="combobox"
-                              aria-expanded={openCommand}
+                              aria-expanded={openOutletCommand}
                               className={cn(
                                 field.state.value &&
                                   "rounded-tr-none rounded-br-none text-black",
@@ -285,7 +307,7 @@ export default function RegisterFormDialog({ _id, onClose, outlet }: Props) {
                               disabled={true}
                             >
                               {field.state.value
-                                ? options?.find(
+                                ? outletOptions?.find(
                                     (o: IOption) =>
                                       o.value === field.state.value.toString()
                                   )?.label
@@ -302,7 +324,7 @@ export default function RegisterFormDialog({ _id, onClose, outlet }: Props) {
                             <CommandList>
                               <CommandEmpty>No option/s found.</CommandEmpty>
                               <CommandGroup>
-                                {options?.map((o: IOption) => (
+                                {outletOptions?.map((o: IOption) => (
                                   <CommandItem
                                     key={o.value}
                                     value={o.value}
@@ -312,7 +334,7 @@ export default function RegisterFormDialog({ _id, onClose, outlet }: Props) {
                                       else {
                                         field.setValue(val.trim())
                                       }
-                                      setOpenCommand(false)
+                                      setOpenOutletCommand(false)
                                     }}
                                   >
                                     <span className="block">{o.label}</span>
@@ -529,6 +551,97 @@ export default function RegisterFormDialog({ _id, onClose, outlet }: Props) {
                           </div>
                         ))}
                       </FieldContent>
+                      {isInvalid && (
+                        <FieldError errors={field.state.meta.errors} />
+                      )}
+                    </Field>
+                  )
+                }}
+              </form.Field>
+              <form.Field name="paymentMethods">
+                {(field) => {
+                  const isInvalid =
+                    field.state.meta.isTouched && !field.state.meta.isValid
+                  return (
+                    <Field data-invalid={isInvalid}>
+                      <FieldLabel htmlFor={field.name}>
+                        Payment Methods
+                      </FieldLabel>
+                      <Popover
+                        open={openPaymentMethodCommand}
+                        onOpenChange={setOpenPaymentMethodCommand}
+                      >
+                        <PopoverTrigger asChild>
+                          <ButtonGroup className="w-full">
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              aria-expanded={openPaymentMethodCommand}
+                              className={cn(
+                                field.state.value &&
+                                  "rounded-tr-none rounded-br-none",
+                                "flex-1 justify-between bg-transparent text-black/80 capitalize"
+                              )}
+                              type="button"
+                            >
+                              {field.state.value
+                                ? `${field.state.value.length} selected`
+                                : `Select ${field.name}`}
+                              <CaretDownIcon />
+                            </Button>
+                          </ButtonGroup>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full p-0">
+                          <Command>
+                            <CommandInput
+                              placeholder={`Filter ${field.name}`}
+                            />
+                            <CommandList>
+                              <CommandEmpty>No option/s found.</CommandEmpty>
+                              <CommandGroup>
+                                {paymentMethodOptions?.map((o: IOption) => (
+                                  <CommandItem
+                                    key={o.value}
+                                    value={o.value}
+                                    onSelect={(val) => {
+                                      if (field.state.value.includes(val)) {
+                                        field.setValue(
+                                          field.state.value.filter(
+                                            (v: string) => v !== val
+                                          )
+                                        )
+                                      } else {
+                                        field.setValue([
+                                          ...field.state.value,
+                                          val,
+                                        ])
+                                      }
+                                    }}
+                                  >
+                                    <span className="block">{o.label}</span>
+                                    {field.state.value.includes(o.value) && (
+                                      <CheckIcon className="block" />
+                                    )}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                      {field.state.value.length > 0 && (
+                        <FieldDescription className="mt-1 block text-sm text-muted-foreground">
+                          Selected:{" "}
+                          <span className="font-medium">
+                            {paymentMethodOptions
+                              .filter((o: IOption) =>
+                                field.state.value.includes(o.value)
+                              )
+                              .map((o: IOption) => o.label)
+                              .join(", ")}
+                          </span>
+                        </FieldDescription>
+                      )}
                       {isInvalid && (
                         <FieldError errors={field.state.meta.errors} />
                       )}

@@ -19,6 +19,12 @@ export const client = new ApolloClient({
       ProductType: {
         keyFields: ["_id"],
       },
+      Product: {
+        keyFields: ["_id"],
+      },
+      Customer: {
+        keyFields: ["_id"],
+      },
     },
   }),
 })
