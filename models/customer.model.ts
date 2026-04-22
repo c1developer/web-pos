@@ -5,7 +5,7 @@ import {
   IStoreCredit,
   IStoreCreditHistoryItem,
   type ICustomer,
-} from "../types/customer.type"
+} from "../types/customer.type" 
 
 const AccountLimitHistoryItem = new Schema<IAccountLimitHistoryItem>({
   remaining: { type: Number, required: true },
