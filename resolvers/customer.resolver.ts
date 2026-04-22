@@ -8,6 +8,7 @@ import { flatten } from "../helpers/flatten"
 import { checkSchema, validate } from "../helpers/validate"
 import { customerSchema } from "../validators/customer.validator"
 import { isISOString } from "../helpers/isoString"
+import { IStoreCreditHistoryItem } from "@/types/customer.type"
 
 const CURSOR_TYPE = "customer"
 
@@ -31,6 +32,24 @@ export const customerResolver = {
           .lean()
         if (!customer) throw new GraphQLError("Customer not found")
         return customer
+      } catch (error) {
+        throw error
+      }
+    },
+    customerCreditHistoryItemById: async (
+      _: any,
+      { customerId, itemId }: any
+    ) => {
+      try {
+        const customer = await Customer.findById(customerId)
+          .select("storeCredit.history")
+          .lean()
+        if (!customer) throw new GraphQLError("Customer not found")
+        const historyItem = customer.storeCredit.history.find(
+          (item: IStoreCreditHistoryItem) => item._id.toString() === itemId
+        )
+        if (!historyItem) throw new GraphQLError("Item not found")
+        return historyItem
       } catch (error) {
         throw error
       }
@@ -261,6 +280,159 @@ export const customerResolver = {
         throw error
       }
     },
+    customerCreditHistoryTable: async (
+      _: any,
+      { first = 1, after, customerId }: IDataTableArgs & { customerId: string }
+    ) => {
+      try {
+        const CREDIT_CURSOR_TYPE = "creditHistory"
+
+        const total = await Customer.findOne({
+          _id: new Types.ObjectId(customerId),
+        }).then((doc) => doc?.storeCredit?.history?.length || 0)
+
+        const pipeline: PipelineStage[] = [
+          {
+            $match: { _id: new Types.ObjectId(customerId) },
+          },
+          {
+            $unwind: {
+              path: "$storeCredit.history",
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+          ...(after
+            ? [
+                {
+                  $match: {
+                    "storeCredit.history._id": {
+                      $lt: new Types.ObjectId(fromCursor(after).id),
+                    },
+                  },
+                },
+              ]
+            : []),
+          {
+            $sort: { "storeCredit.history._id": -1 },
+          },
+          { $limit: first + 1 },
+          {
+            $project: {
+              _id: "$storeCredit.history._id",
+              remaining: "$storeCredit.history.remaining",
+              transacted: "$storeCredit.history.transacted",
+              date: "$storeCredit.history.date",
+              description: "$storeCredit.history.description",
+            },
+          },
+        ]
+
+        const result = await Customer.aggregate(pipeline)
+        const sliced = result.slice(0, first)
+        const edges = sliced.map((edge) => ({
+          node: edge,
+          cursor: toCursor({
+            type: CREDIT_CURSOR_TYPE,
+            id: edge._id.toString(),
+            value: edge._id.toString(),
+          }),
+        }))
+
+        return {
+          total,
+          pages: Math.ceil(total / first),
+          edges,
+          pageInfo: {
+            endCursor: sliced.length
+              ? toCursor({
+                  id: sliced[sliced.length - 1]._id.toString(),
+                  type: CREDIT_CURSOR_TYPE,
+                  value: sliced[sliced.length - 1]._id.toString(),
+                })
+              : null,
+            hasNextPage: result.length > first,
+          },
+        }
+      } catch (error) {
+        throw error
+      }
+    },
+    customerLimitHistoryTable: async (
+      _: any,
+      { first = 1, after, customerId }: IDataTableArgs & { customerId: string }
+    ) => {
+      try {
+        const LIMIT_CURSOR_TYPE = "limitHistory"
+
+        const total = await Customer.findOne({
+          _id: new Types.ObjectId(customerId),
+        }).then((doc) => doc?.accountLimit?.history?.length || 0)
+
+        const pipeline: PipelineStage[] = [
+          {
+            $match: { _id: new Types.ObjectId(customerId) },
+          },
+          {
+            $unwind: {
+              path: "$accountLimit.history",
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+          ...(after
+            ? [
+                {
+                  $match: {
+                    "accountLimit.history._id": {
+                      $lt: new Types.ObjectId(fromCursor(after).id),
+                    },
+                  },
+                },
+              ]
+            : []),
+          {
+            $sort: { "accountLimit.history._id": -1 },
+          },
+          { $limit: first + 1 },
+          {
+            $project: {
+              _id: "$accountLimit.history._id",
+              remaining: "$accountLimit.history.remaining",
+              transacted: "$accountLimit.history.transacted",
+              date: "$accountLimit.history.date",
+            },
+          },
+        ]
+
+        const result = await Customer.aggregate(pipeline)
+        const sliced = result.slice(0, first)
+        const edges = sliced.map((edge) => ({
+          node: edge,
+          cursor: toCursor({
+            type: LIMIT_CURSOR_TYPE,
+            id: edge._id.toString(),
+            value: edge._id.toString(),
+          }),
+        }))
+
+        return {
+          total,
+          pages: Math.ceil(total / first),
+          edges,
+          pageInfo: {
+            endCursor: sliced.length
+              ? toCursor({
+                  id: sliced[sliced.length - 1]._id.toString(),
+                  type: LIMIT_CURSOR_TYPE,
+                  value: sliced[sliced.length - 1]._id.toString(),
+                })
+              : null,
+            hasNextPage: result.length > first,
+          },
+        }
+      } catch (error) {
+        throw error
+      }
+    },
     customerOptions: async () => {
       try {
         const customers = await Customer.find({ isActive: true })
@@ -308,7 +480,10 @@ export const customerResolver = {
         const result = await Customer.findByIdAndUpdate(
           _id,
           {
-            $inc: { "accountLimit.current": amount },
+            $inc: {
+              "accountLimit.current": amount,
+              "accountLimit.max": amount,
+            },
             $push: {
               "accountLimit.history": {
                 remaining: customer.accountLimit.current + amount,

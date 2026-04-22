@@ -14,13 +14,13 @@ import { useQuery } from "@apollo/client/react"
 import { XIcon } from "@phosphor-icons/react"
 import { format } from "date-fns"
 import gql from "graphql-tag"
-import AdjustCreditDialog from "./adjust-credit"
+import AdjustLimitDialog from "./adjust-limit"
 import { Separator } from "@/components/ui/separator"
 import { useMemo, useState } from "react"
 import { cn } from "@/lib/utils"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { ColumnDef } from "@tanstack/react-table"
-import { IStoreCreditHistoryItem } from "@/types/customer.type"
+import { IAccountLimitHistoryItem } from "@/types/customer.type"
 import DataTable from "@/components/custom/data-table"
 import { ButtonGroup, ButtonGroupText } from "@/components/ui/button-group"
 import {
@@ -31,22 +31,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import RowViewCreditHistoryItemDialog from "./row-credit-history-item"
 
 type Props = {
   _id?: string
 }
 
-const GET_CUSTOMER_CREDIT_HISTORY = gql`
-  query ViewStoreCreditDetails($first: Int, $after: String, $customerId: ID!) {
+const GET_CUSTOMER_LIMIT_HISTORY = gql`
+  query ViewAccountLimitDetails($first: Int, $after: String, $customerId: ID!) {
     customerReport(_id: $customerId) {
       _id
       name
-      storeCredit {
+      accountLimit {
         current
+        max
       }
     }
-    customerCreditHistoryTable(
+    customerLimitHistoryTable(
       first: $first
       after: $after
       customerId: $customerId
@@ -60,7 +60,6 @@ const GET_CUSTOMER_CREDIT_HISTORY = gql`
           remaining
           transacted
           date
-          description
         }
       }
       pageInfo {
@@ -71,7 +70,7 @@ const GET_CUSTOMER_CREDIT_HISTORY = gql`
   }
 `
 
-export default function StoreCreditDrawer({ _id }: Props) {
+export default function AccountLimitDrawer({ _id }: Props) {
   // Drawer state
   const [open, setOpen] = useState(false)
   // Pagination state
@@ -85,7 +84,7 @@ export default function StoreCreditDrawer({ _id }: Props) {
     loaded: 1,
     max: 1,
   })
-  const { data, fetchMore, loading } = useQuery(GET_CUSTOMER_CREDIT_HISTORY, {
+  const { data, fetchMore, loading } = useQuery(GET_CUSTOMER_LIMIT_HISTORY, {
     variables: {
       first: rows,
       customerId: _id,
@@ -101,30 +100,29 @@ export default function StoreCreditDrawer({ _id }: Props) {
   const { total, nodes, endCursor } = useMemo(() => {
     const result = data as any
     const nodes =
-      result?.customerCreditHistoryTable?.edges?.map(
-        (edge: any) => edge.node
-      ) || []
+      result?.customerLimitHistoryTable?.edges?.map((edge: any) => edge.node) ||
+      []
     const hasNextPage =
-      result?.customerCreditHistoryTable?.pageInfo?.hasNextPage || false
+      result?.customerLimitHistoryTable?.pageInfo?.hasNextPage || false
     const endCursor =
-      result?.customerCreditHistoryTable?.pageInfo?.endCursor || null
+      result?.customerLimitHistoryTable?.pageInfo?.endCursor || null
 
     // eslint-disable-next-line react-hooks/set-state-in-render
     setPage((prev) => ({
       ...prev,
-      max: result?.customerCreditHistoryTable?.pages || 1,
+      max: result?.customerLimitHistoryTable?.pages || 1,
     }))
 
     return {
-      total: result?.customerCreditHistoryTable?.total || 0,
-      pages: result?.customerCreditHistoryTable?.pages || 0,
+      total: result?.customerLimitHistoryTable?.total || 0,
+      pages: result?.customerLimitHistoryTable?.pages || 0,
       nodes,
       hasNextPage,
       endCursor,
     }
   }, [data])
 
-  const columns: ColumnDef<IStoreCreditHistoryItem>[] = useMemo(
+  const columns: ColumnDef<IAccountLimitHistoryItem>[] = useMemo(
     () => [
       {
         id: "transacted",
@@ -185,21 +183,21 @@ export default function StoreCreditDrawer({ _id }: Props) {
         updateQuery: (prev: any, { fetchMoreResult: more }: any) => {
           if (!more) return prev
           const cursorSet = new Set([
-            ...prev.customerCreditHistoryTable.edges.map(
+            ...prev.customerLimitHistoryTable.edges.map(
               (edge: any) => edge.cursor
             ),
-            ...more.customerCreditHistoryTable.edges.map(
+            ...more.customerLimitHistoryTable.edges.map(
               (edge: any) => edge.cursor
             ),
           ])
           const filteredEdges = [
-            ...prev.customerCreditHistoryTable.edges,
-            ...more.customerCreditHistoryTable.edges,
+            ...prev.customerLimitHistoryTable.edges,
+            ...more.customerLimitHistoryTable.edges,
           ].filter((edge: any) => cursorSet.has(edge.cursor))
-          const pageInfo = more.customerCreditHistoryTable.pageInfo
+          const pageInfo = more.customerLimitHistoryTable.pageInfo
           return {
-            customerCreditHistoryTable: {
-              ...more.customerCreditHistoryTable,
+            customerLimitHistoryTable: {
+              ...more.customerLimitHistoryTable,
               edges: filteredEdges,
               pageInfo,
             },
@@ -229,8 +227,8 @@ export default function StoreCreditDrawer({ _id }: Props) {
   return (
     <Drawer direction="right" modal open={open} onOpenChange={setOpen}>
       <DrawerTrigger asChild>
-        <Button className="bg-destructive hover:bg-destructive/80">
-          Store Credit
+        <Button className="bg-blue-700 hover:bg-blue-700/80">
+          Account Limit
         </Button>
       </DrawerTrigger>
       <DrawerContent
@@ -240,9 +238,9 @@ export default function StoreCreditDrawer({ _id }: Props) {
       >
         <DrawerHeader className="flex flex-row justify-between">
           <div>
-            <DrawerTitle>Store Credit</DrawerTitle>
+            <DrawerTitle>Account Limit</DrawerTitle>
             <DrawerDescription>
-              Remaining Store credit of {customer?.name}
+              Current account limit of {customer?.name}
             </DrawerDescription>
           </div>
           <DrawerClose asChild>
@@ -252,14 +250,25 @@ export default function StoreCreditDrawer({ _id }: Props) {
           </DrawerClose>
         </DrawerHeader>
         <div className="flex h-full w-full flex-col gap-2 px-4">
-          <div className="flex flex-col gap-1.5 border p-2">
-            <Label>Remaining Store Credit</Label>
-            <span className="block text-lg font-medium">
-              {new Intl.NumberFormat("en-PH", {
-                style: "currency",
-                currency: "PHP",
-              }).format(customer?.storeCredit?.current || 0)}
-            </span>
+          <div className="grid grid-cols-2 gap-1.5 border p-2">
+            <div>
+              <Label>Max Account Limit</Label>
+              <span className="block text-lg font-medium">
+                {new Intl.NumberFormat("en-PH", {
+                  style: "currency",
+                  currency: "PHP",
+                }).format(customer?.accountLimit?.max || 0)}
+              </span>
+            </div>
+            <div>
+              <Label>Remaining</Label>
+              <span className="block text-lg font-medium text-muted-foreground">
+                {new Intl.NumberFormat("en-PH", {
+                  style: "currency",
+                  currency: "PHP",
+                }).format(customer?.accountLimit?.current || 0)}
+              </span>
+            </div>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm">
@@ -313,12 +322,11 @@ export default function StoreCreditDrawer({ _id }: Props) {
               columns={columns}
               data={nodes.slice((page.current - 1) * rows, page.current * rows)}
               noFooter={true}
-              rowView={<RowViewCreditHistoryItemDialog customerId={_id} />}
             />
           </div>
         </div>
         <DrawerFooter className="flex flex-row">
-          <AdjustCreditDialog _id={_id!} />
+          <AdjustLimitDialog _id={_id!} />
         </DrawerFooter>
       </DrawerContent>
     </Drawer>

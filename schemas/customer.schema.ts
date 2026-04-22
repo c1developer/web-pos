@@ -14,6 +14,7 @@ export const customerSchema = gql`
   }
 
   type StoreCreditHistoryItem {
+    _id: ID
     remaining: Float
     transacted: Float
     date: String
@@ -83,6 +84,47 @@ export const customerSchema = gql`
     cursor: String
   }
 
+  # Customer Credit History Table
+  type CustomerCreditHistoryConnection {
+    total: Int
+    pages: Int
+    edges: [CustomerCreditHistoryEdge]
+    pageInfo: PageInfo
+  }
+
+  type CustomerCreditHistoryNode {
+    _id: ID!
+    remaining: Float
+    transacted: Float
+    date: String
+    description: String
+  }
+
+  type CustomerCreditHistoryEdge {
+    node: CustomerCreditHistoryNode
+    cursor: String
+  }
+
+  # Customer Limit History Table
+  type CustomerLimitHistoryConnection {
+    total: Int
+    pages: Int
+    edges: [CustomerLimitHistoryEdge]
+    pageInfo: PageInfo
+  }
+
+  type CustomerLimitHistoryNode {
+    _id: ID!
+    remaining: Float
+    transacted: Float
+    date: String
+  }
+
+  type CustomerLimitHistoryEdge {
+    node: CustomerLimitHistoryNode
+    cursor: String
+  }
+
   # Inputs
   input CustomerInput {
     name: String
@@ -92,6 +134,10 @@ export const customerSchema = gql`
   type Query {
     customer(_id: ID!): Customer
     customerReport(_id: ID!): CustomerReport
+    customerCreditHistoryItemById(
+      customerId: ID!
+      itemId: ID!
+    ): StoreCreditHistoryItem
     customerTable(
       first: Int
       after: String
@@ -106,6 +152,16 @@ export const customerSchema = gql`
       filter: [Filter]
       sort: Sort
     ): CustomerReportConnection
+    customerCreditHistoryTable(
+      first: Int
+      after: String
+      customerId: ID!
+    ): CustomerCreditHistoryConnection
+    customerLimitHistoryTable(
+      first: Int
+      after: String
+      customerId: ID!
+    ): CustomerLimitHistoryConnection
     customerOptions: [Option]
   }
 

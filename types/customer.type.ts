@@ -1,6 +1,7 @@
 import type { Types } from "mongoose"
 
 export interface IAccountLimitHistoryItem {
+  _id: Types.ObjectId | string
   remaining: number
   transacted: number
   date: Date
@@ -13,6 +14,7 @@ export interface IAccountLimit {
 }
 
 export interface IStoreCreditHistoryItem {
+  _id: Types.ObjectId | string
   remaining: number
   transacted: number
   date: Date

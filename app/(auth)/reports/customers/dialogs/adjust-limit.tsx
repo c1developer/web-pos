@@ -36,16 +36,17 @@ const GET_CUSTOMER_REPORT = gql`
     customerReport(_id: $_id) {
       _id
       name
-      storeCredit {
+      accountLimit {
+        max
         current
       }
     }
   }
 `
 
-const ADJUST_STORE_CREDIT = gql`
-  mutation AdjustStoreCredit($_id: ID!, $amount: Float!, $description: String) {
-    adjustStoreCredit(_id: $_id, amount: $amount, description: $description) {
+const ADJUST_ACCOUNT_LIMIT = gql`
+  mutation AdjustAccountLimit($_id: ID!, $amount: Float!) {
+    adjustAccountLimit(_id: $_id, amount: $amount) {
       ok
       message
       data
@@ -68,8 +69,12 @@ export default function AdjustCreditDialog({ _id }: Props) {
     fetchPolicy: "network-only",
     skip: !_id || !open,
   })
-  const [adjustCredit] = useMutation(ADJUST_STORE_CREDIT, {
-    refetchQueries: ["CustomerReport", "CustomerReportTable", "ViewStoreCreditDetails"],
+  const [adjustCredit] = useMutation(ADJUST_ACCOUNT_LIMIT, {
+    refetchQueries: [
+      "CustomerReport",
+      "CustomerReportTable",
+      "ViewAccountLimitDetails",
+    ],
     awaitRefetchQueries: true,
   })
 
@@ -98,12 +103,12 @@ export default function AdjustCreditDialog({ _id }: Props) {
           const result: any = await adjustCredit({
             variables: { _id, ...value },
           })
-          if (result.data.adjustStoreCredit.ok) {
-            toast.success(result.data.adjustStoreCredit.message)
+          if (result.data.adjustAccountLimit.ok) {
+            toast.success(result.data.adjustAccountLimit.message)
             setOpen(false)
           }
         } catch (error) {
-          console.error("Error adjusting store credit:", error)
+          console.error("Error adjusting account limit:", error)
         }
       }),
   })
@@ -111,8 +116,8 @@ export default function AdjustCreditDialog({ _id }: Props) {
   return (
     <Dialog modal open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-destructive hover:bg-destructive/80">
-          Issue Store Credit
+        <Button className="bg-blue-700 hover:bg-blue-700/80">
+          Adjust Account Limit
         </Button>
       </DialogTrigger>
       <DialogContent
@@ -122,11 +127,11 @@ export default function AdjustCreditDialog({ _id }: Props) {
       >
         <DialogHeader>
           <DialogTitle>
-            Adjust Store Credit for{" "}
+            Adjust Max Account Limit for{" "}
             <span className="underline">{data?.customerReport?.name}</span>
           </DialogTitle>
           <DialogDescription>
-            Adjust the store credit for this customer.
+            Adjust the account limit for this customer.
           </DialogDescription>
         </DialogHeader>
         <div>
@@ -138,14 +143,25 @@ export default function AdjustCreditDialog({ _id }: Props) {
             }}
           >
             <FieldSet>
-              <div className="flex flex-col gap-1.5 border p-2">
-                <Label>Remaining Store Credit</Label>
-                <span className="block text-lg font-medium">
-                  {new Intl.NumberFormat("en-PH", {
-                    style: "currency",
-                    currency: "PHP",
-                  }).format(data?.customerReport?.storeCredit?.current || 0)}
-                </span>
+              <div className="grid grid-cols-2 gap-1.5 border p-2">
+                <div>
+                  <Label>Max Account Limit</Label>
+                  <span className="block text-lg font-medium ">
+                    {new Intl.NumberFormat("en-PH", {
+                      style: "currency",
+                      currency: "PHP",
+                    }).format(data?.customerReport?.accountLimit?.max || 0)}
+                  </span>
+                </div>
+                <div>
+                  <Label>Remaining</Label>
+                  <span className="block text-lg font-medium text-muted-foreground">
+                    {new Intl.NumberFormat("en-PH", {
+                      style: "currency",
+                      currency: "PHP",
+                    }).format(data?.customerReport?.accountLimit?.current || 0)}
+                  </span>
+                </div>
               </div>
               <form.Field name="amount">
                 {(field) => {
@@ -153,7 +169,7 @@ export default function AdjustCreditDialog({ _id }: Props) {
                     field.state.meta.isTouched && !field.state.meta.isValid
                   return (
                     <Field data-invalid={isInvalid}>
-                      <FieldLabel htmlFor={field.name}>Amount</FieldLabel>
+                      <FieldLabel htmlFor={field.name}>Adjustment Amount for Max Limit</FieldLabel>
                       <InputGroup className="-my-1">
                         <InputGroupAddon>
                           <InputGroupText>₱</InputGroupText>
@@ -169,32 +185,6 @@ export default function AdjustCreditDialog({ _id }: Props) {
                             field.handleChange(Number(e.target.value))
                           }
                           type="number"
-                          aria-invalid={isInvalid}
-                        />
-                      </InputGroup>
-                      {isInvalid && (
-                        <FieldError errors={field.state.meta.errors} />
-                      )}
-                    </Field>
-                  )
-                }}
-              </form.Field>
-              <form.Field name="description">
-                {(field) => {
-                  const isInvalid =
-                    field.state.meta.isTouched && !field.state.meta.isValid
-                  return (
-                    <Field data-invalid={isInvalid}>
-                      <FieldLabel htmlFor={field.name}>Description</FieldLabel>
-                      <InputGroup className="-my-1">
-                        <InputGroupTextarea
-                          placeholder="Description (optional)"
-                          disabled={isPending}
-                          id={field.name}
-                          name={field.name}
-                          value={field.state.value}
-                          onBlur={field.handleBlur}
-                          onChange={(e) => field.handleChange(e.target.value)}
                           aria-invalid={isInvalid}
                         />
                       </InputGroup>

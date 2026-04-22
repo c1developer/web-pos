@@ -7,14 +7,11 @@ import {
   type ICustomer,
 } from "../types/customer.type"
 
-const AccountLimitHistoryItem = new Schema<IAccountLimitHistoryItem>(
-  {
-    remaining: { type: Number, required: true },
-    transacted: { type: Number, required: true },
-    date: { type: Date, required: true },
-  },
-  { _id: false }
-)
+const AccountLimitHistoryItem = new Schema<IAccountLimitHistoryItem>({
+  remaining: { type: Number, required: true },
+  transacted: { type: Number, required: true },
+  date: { type: Date, required: true },
+})
 
 const AccountLimit = new Schema<IAccountLimit>(
   {
@@ -25,15 +22,12 @@ const AccountLimit = new Schema<IAccountLimit>(
   { _id: false }
 )
 
-const StoreCreditHistoryItem = new Schema<IStoreCreditHistoryItem>(
-  {
-    remaining: { type: Number, required: true },
-    transacted: { type: Number, required: true },
-    date: { type: Date, required: true },
-    description: { type: String, required: true },
-  },
-  { _id: false }
-)
+const StoreCreditHistoryItem = new Schema<IStoreCreditHistoryItem>({
+  remaining: { type: Number, required: true },
+  transacted: { type: Number, required: true },
+  date: { type: Date, required: true },
+  description: { type: String, required: true },
+})
 
 const StoreCredit = new Schema<IStoreCredit>(
   {

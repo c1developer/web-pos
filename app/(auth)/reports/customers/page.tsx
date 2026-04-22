@@ -23,7 +23,6 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import ViewDialog from "./dialogs/view"
 import SortHeader from "@/components/custom/sort-header"
 import {
   Select,
@@ -69,28 +68,6 @@ const GET_CUSTOMERS = gql`
     }
   }
 `
-
-function Actions({ row }: { row?: ICustomerNode }) {
-  const [open, setOpen] = useState(false)
-  const data = useMemo(() => row, [row])
-  const status = data?.isActive
-
-  return (
-    <DropdownMenu modal open={open} onOpenChange={setOpen}>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon-sm">
-          <GearIcon />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent side="left" align="start">
-        <ViewDialog
-          _id={data?._id?.toString() || ""}
-          onClose={() => setOpen(false)}
-        />
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
-}
 
 export default function Page() {
   // Pagination state
@@ -396,7 +373,6 @@ export default function Page() {
         loading={loading}
         columns={columns}
         data={nodes.slice((page.current - 1) * rows, page.current * rows)}
-        actionsColumn={<Actions />}
         rowView={<RowViewDialog />}
       />
     </div>

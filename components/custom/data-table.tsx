@@ -28,6 +28,7 @@ type Props<TData, TValue> = {
   data: TData[]
   actionsColumn?: ReactNode
   rowView?: ReactNode
+  noFooter?: boolean
 }
 
 export default function DataTable<TData, TValue>({
@@ -35,6 +36,7 @@ export default function DataTable<TData, TValue>({
   data,
   actionsColumn,
   rowView,
+  noFooter = false,
 }: Props<TData, TValue>) {
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
@@ -78,27 +80,28 @@ export default function DataTable<TData, TValue>({
               })}
             </TableRow>
           ))}
-          {table.getFooterGroups().map((footerGroup) => (
-            <TableRow key={footerGroup.id}>
-              {footerGroup.headers.map((footer) => {
-                return (
-                  <TableHead
-                    key={footer.id}
-                    style={{
-                      width: `${footer.getSize()}px`,
-                    }}
-                  >
-                    {footer.isPlaceholder
-                      ? null
-                      : flexRender(
-                          footer.column.columnDef.footer,
-                          footer.getContext()
-                        )}
-                  </TableHead>
-                )
-              })}
-            </TableRow>
-          ))}
+          {!noFooter &&
+            table.getFooterGroups().map((footerGroup) => (
+              <TableRow key={footerGroup.id}>
+                {footerGroup.headers.map((footer) => {
+                  return (
+                    <TableHead
+                      key={footer.id}
+                      style={{
+                        width: `${footer.getSize()}px`,
+                      }}
+                    >
+                      {footer.isPlaceholder
+                        ? null
+                        : flexRender(
+                            footer.column.columnDef.footer,
+                            footer.getContext()
+                          )}
+                    </TableHead>
+                  )
+                })}
+              </TableRow>
+            ))}
         </TableHeader>
         <TableBody>
           {table.getRowModel().rows?.length ? (

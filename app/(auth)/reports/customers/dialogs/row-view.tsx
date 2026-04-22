@@ -16,6 +16,7 @@ import gql from "graphql-tag"
 import AdjustCreditDialog from "./adjust-credit"
 import { Separator } from "@/components/ui/separator"
 import StoreCreditDrawer from "./view-credit"
+import AccountLimitDrawer from "./view-limit"
 
 type Props = {
   _id?: string
@@ -33,11 +34,7 @@ const GET_CUSTOMER = gql`
       accountLimit {
         current
         max
-        history {
-          remaining
-          transacted
-          date
-        }
+       
       }
       storeCredit {
         current
@@ -128,12 +125,9 @@ export default function RowViewDrawer({ _id, open, setOpen, onClose }: Props) {
           </div>
         </div>
         <DrawerFooter className="flex flex-row">
-          {/* <AdjustCreditDialog _id={_id!} onClose={handleClose} />
-           */}
           <StoreCreditDrawer _id={_id!} />
-          <Button className="bg-sky-800 hover:bg-sky-800/80">
-            Adjust Account Limit
-          </Button>
+          <AccountLimitDrawer _id={_id!} />
+        
         </DrawerFooter>
       </DrawerContent>
     </Drawer>
