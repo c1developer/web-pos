@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label"
 import { useQuery } from "@apollo/client/react"
 import { format } from "date-fns"
 import gql from "graphql-tag"
+import React from "react"
 
 type Props = {
   _id?: string

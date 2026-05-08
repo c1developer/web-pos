@@ -59,6 +59,8 @@ export default function FormDialog({ _id, onClose }: Props) {
   const [open, setOpen] = useState<boolean>(false)
   const [isPending, startTransition] = useTransition()
   const [createCustomer] = useMutation(CREATE_CUSTOMER, {
+    refetchQueries: ["CustomerOptions"],
+    awaitRefetchQueries: true,
     update: (cache, { data }: any) => {
       const newCustomer = data.createCustomer.data
       const newEdge = {

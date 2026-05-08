@@ -1,6 +1,6 @@
 "use client"
 import { Label } from "@/components/ui/label"
-import FormDialog from "./dialogs/form"
+import FormDialog from "./_dialogs/form"
 import { useCallback, useMemo, useState } from "react"
 import gql from "graphql-tag"
 import { useQuery } from "@apollo/client/react"
@@ -24,9 +24,9 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import ViewDialog from "./dialogs/view"
+import ViewDialog from "./_dialogs/view"
 import SortHeader from "@/components/custom/sort-header"
-import StatusDialog from "./dialogs/status"
+import StatusDialog from "./_dialogs/status"
 import {
   Select,
   SelectContent,
@@ -35,7 +35,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import RowViewDialog from "./dialogs/row-view"
+import RowViewDialog from "./_dialogs/row-view"
 
 const GET_CUSTOMERS = gql`
   query CustomerTable(

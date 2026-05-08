@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/field"
 import {
   InputGroup,
+  InputGroupAddon,
   InputGroupInput,
   InputGroupTextarea,
 } from "@/components/ui/input-group"
@@ -120,6 +121,8 @@ export default function FormDialog({ _id, onClose }: Props) {
   const [open, setOpen] = useState<boolean>(false)
   const [isPending, startTransition] = useTransition()
   const [createProduct] = useMutation(CREATE_PRODUCT, {
+    refetchQueries: ["ProcessedRegister"],
+    awaitRefetchQueries: true,
     update: (cache, { data }: any) => {
       const newProduct = data.createProduct.data
       const newEdge = {
@@ -347,6 +350,38 @@ export default function FormDialog({ _id, onClose }: Props) {
                           onBlur={field.handleBlur}
                           onChange={(e) => field.handleChange(e.target.value)}
                           aria-invalid={isInvalid}
+                        />
+                      </InputGroup>
+                      {isInvalid && (
+                        <FieldError errors={field.state.meta.errors} />
+                      )}
+                    </Field>
+                  )
+                }}
+              </form.Field>
+              <form.Field name="currentPrice">
+                {(field) => {
+                  const isInvalid =
+                    field.state.meta.isTouched && !field.state.meta.isValid
+                  return (
+                    <Field data-invalid={isInvalid}>
+                      <FieldLabel htmlFor={field.name}>
+                        Current Price
+                      </FieldLabel>
+                      <InputGroup className="-my-1">
+                        <InputGroupAddon>₱</InputGroupAddon>
+                        <InputGroupInput
+                          placeholder="Current Price"
+                          disabled={isPending}
+                          id={field.name}
+                          name={field.name}
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(e) =>
+                            field.handleChange(parseFloat(e.target.value))
+                          }
+                          aria-invalid={isInvalid}
+                          type="number"
                         />
                       </InputGroup>
                       {isInvalid && (

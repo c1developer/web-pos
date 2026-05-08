@@ -20,7 +20,7 @@ import {
   TableRow,
 } from "../ui/table"
 import { cn } from "@/lib/utils"
-import RowViewDialog from "@/app/(auth)/brand/dialogs/row-view"
+import RowViewDialog from "@/app/(auth)/brand/_dialogs/row-view"
 
 type Props<TData, TValue> = {
   loading?: boolean
