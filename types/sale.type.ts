@@ -17,7 +17,6 @@ export interface ISaleItem {
   name: string // Snapshot of the product name at the time of sale
   price: number // Snapshot of the product price at the time of sale
   quantity: number
-  subTotal: number
   discount: number
   total: number
 }
@@ -39,7 +38,6 @@ export interface ISale {
   saleNumber: string
   customer: Types.ObjectId | string | ICustomer | null
   items: ISaleItem[]
-  subTotal: number
   discount: number
   total: number
   allocations: IPaymentAllocation[]
@@ -47,6 +45,7 @@ export interface ISale {
   unappliedAmount: number
   date: Date
   by: Types.ObjectId | string | IUser
+  notes: string
   currentStatus: SaleStatus
   onAccount: boolean
   statusHistory: ISaleHistoryItem[]
@@ -58,7 +57,6 @@ export interface ISaleItemInput {
   name: string // Snapshot of the product name at the time of sale
   price: number // Snapshot of the product price at the time of sale
   quantity: number
-  subTotal: number
   discount: number
   total: number
 }
@@ -72,9 +70,8 @@ export interface IPaymentAllocationInput {
 export interface ISaleInput {
   _id: Types.ObjectId | string
   saleNumber: string
-  customer: Types.ObjectId | string 
+  customer: Types.ObjectId | string
   items: ISaleItemInput[]
-  subTotal: number
   discount: number
   total: number
   allocations: IPaymentAllocationInput[]
