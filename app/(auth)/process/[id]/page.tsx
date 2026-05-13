@@ -86,7 +86,6 @@ const GET_REGISTER = gql`
         barcode
         description
         currentPrice
-
         type {
           _id
           name
@@ -96,13 +95,11 @@ const GET_REGISTER = gql`
         _id
         name
       }
+      paymentMethods {
+        _id
+        name
+      }
     }
-  }
-`
-
-const FETCH_LATEST_SALE_NUMBER = gql`
-  query FetchLatestSaleNumber($_id: ID!) {
-    latestSaleNumber(_id: $_id)
   }
 `
 
@@ -314,7 +311,7 @@ export default function Page() {
                                 (item: any) => {
                                   return (
                                     product._id === item.product &&
-                                    item.price == product.currentPrice
+                                    item.price == item.snapshotPrice
                                   )
                                 }
                               )
@@ -323,14 +320,14 @@ export default function Page() {
                                 return currentItems.map((item: any) => {
                                   if (
                                     existingItem.product === item.product &&
-                                    item.price == product.currentPrice
+                                    item.price == item.snapshotPrice
                                   ) {
                                     const newQty = item.quantity + 1
                                     const itemPrice =
-                                      product.currentPrice - item.discount
+                                      item.snapshotPrice - item.discount
                                     return {
                                       ...item,
-                                      subTotal: product.currentPrice * newQty,
+                                      subTotal: item.snapshotPrice * newQty,
                                       quantity: newQty,
                                       price: itemPrice,
                                       total: itemPrice * newQty,
@@ -343,6 +340,8 @@ export default function Page() {
                                 ...form.getFieldValue("items"),
                                 {
                                   product: product._id,
+                                  snapshotPrice: product.currentPrice,
+                                  snapshotName: product.name,
                                   quantity: 1,
                                   name: product.name,
                                   price: product.currentPrice,
@@ -395,14 +394,10 @@ export default function Page() {
                   {state.items.length > 0 && (
                     <div className="flex max-h-96 w-full flex-col gap-2.5">
                       {state.items.map((item: any, index: number) => {
-                        const product = register?.products.find(
-                          (p: any) => p._id === item.product
-                        )
                         return (
                           <PerItem
                             form={form}
                             state={state}
-                            product={product}
                             index={index}
                             key={index}
                           >
@@ -444,7 +439,7 @@ export default function Page() {
                                             style: "currency",
                                             currency: "PHP",
                                           }).format(
-                                            item.quantity * product.currentPrice
+                                            item.quantity * item.snapshotPrice
                                           )}
                                         </span>
                                       </span>
@@ -570,12 +565,12 @@ export default function Page() {
                   </div>
                   <div>
                     <DiscardDialog discard={() => form.reset()} />
-                    <Pay form={form} state={state}>
+                    <Pay form={form} state={state} register={register}>
                       <Button
                         className="flex h-fit w-full justify-between p-3.5 text-xl"
                         size="lg"
-                        type="submit"
                         form="sale-form"
+                        type="button"
                       >
                         <span>Pay</span>
                         <span>

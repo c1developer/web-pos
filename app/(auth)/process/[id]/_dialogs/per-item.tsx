@@ -24,20 +24,18 @@ function PerItem({
   form,
   state,
   index,
-  product,
 }: Readonly<{
   children: React.ReactNode
   form: any
   state: any
   index: any
-  product: any
 }>) {
-  const [open, setOpen] = useState<boolean>()
+  const [open, setOpen] = useState<boolean>(false)
   const item = state.items[index]
   const [discountType, setDiscountType] = useState<"%" | "₱">("₱")
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet open={open} onOpenChange={setOpen} modal={true}>
       <SheetTrigger asChild>{children}</SheetTrigger>
       <SheetContent>
         <SheetHeader>
@@ -51,18 +49,19 @@ function PerItem({
             <Input
               value={item?.quantity}
               type="number"
+              min={1}
               onChange={(e) => {
                 {
                   const quantity = parseInt(e.target.value)
                   form.setFieldValue(`items`, () => {
-                    const itemPrice = product.currentPrice - item.discount
+                    const itemPrice = item.snapshotPrice - item.discount
                     const itemTotal = quantity * itemPrice
                     return state.items.map((i: any, idx: number) => {
                       if (idx === index) {
                         return {
                           ...i,
                           quantity,
-                          subTotal: quantity * product.currentPrice,
+                          subTotal: quantity * item.snapshotPrice,
                           price: itemPrice,
                           total: itemTotal,
                         }
@@ -75,7 +74,7 @@ function PerItem({
           </div>
           <div className="space-y-2">
             <Label>
-              Discount  {discountType === "%" ? "(%)" : "per item (₱)"}
+              Discount {discountType === "%" ? "(%)" : "per item (₱)"}
               <span
                 className="text-primary hover:cursor-pointer hover:underline hover:underline-offset-2"
                 onClick={() =>
@@ -92,7 +91,7 @@ function PerItem({
                 <InputGroupAddon align="inline-end">%</InputGroupAddon>
                 <InputGroupInput
                   value={parseFloat(
-                    ((item?.discount / product.currentPrice) * 100).toFixed(2)
+                    ((item?.discount / item.snapshotPrice) * 100).toFixed(2)
                   )}
                   type="number"
                   min={0}
@@ -103,9 +102,9 @@ function PerItem({
                       form.setFieldValue(`items`, () => {
                         const discountAmount = (
                           (discount / 100) *
-                          product.currentPrice
+                          item.snapshotPrice
                         ).toFixed(2)
-                        const itemPrice = product.currentPrice - +discountAmount
+                        const itemPrice = item.snapshotPrice - +discountAmount
                         const itemTotal = item.quantity * itemPrice
                         return state.items.map((i: any, idx: number) => {
                           if (idx === index) {
@@ -129,13 +128,13 @@ function PerItem({
                 value={item?.discount || 0}
                 type="number"
                 min={0}
-                max={product.currentPrice}
+                max={item.snapshotPrice}
                 readOnly={discountType === "%"}
                 onChange={(e) => {
                   {
                     const discount = parseFloat(e.target.value)
                     form.setFieldValue(`items`, () => {
-                      const itemPrice = product.currentPrice - discount
+                      const itemPrice = item.snapshotPrice - discount
                       const itemTotal = item.quantity * itemPrice
                       return state.items.map((i: any, idx: number) => {
                         if (idx === index) {
@@ -171,7 +170,7 @@ function PerItem({
                     className="text-muted-foreground line-through"
                     align="inline-end"
                   >
-                    ₱{parseFloat(product.currentPrice).toFixed(2)}
+                    ₱{parseFloat(item.snapshotPrice).toFixed(2)}
                   </InputGroupAddon>
                 </>
               )}
@@ -197,7 +196,7 @@ function PerItem({
                   >
                     ₱
                     {parseFloat(
-                      String(product.currentPrice * parseInt(item.quantity))
+                      String(item.snapshotPrice * parseInt(item.quantity))
                     ).toFixed(2)}
                   </InputGroupAddon>
                 </>
@@ -206,6 +205,18 @@ function PerItem({
           </div>
         </div>
         <SheetFooter>
+          <Button
+            variant="destructive"
+            onClick={() => {
+              setOpen(false)
+              form.setFieldValue(
+                "items",
+                state.items.filter((_: any, i: number) => i !== index)
+              )
+            }}
+          >
+            Remove Item
+          </Button>
           <SheetClose asChild>
             <Button variant="outline">Close</Button>
           </SheetClose>

@@ -14,8 +14,9 @@ export enum SaleStatus {
 
 export interface ISaleItem {
   product: Types.ObjectId | string | IProduct
-  name: string // Snapshot of the product name at the time of sale
-  price: number // Snapshot of the product price at the time of sale
+  snapshotName: string
+  snapshotPrice: number
+  price: number
   quantity: number
   discount: number
   total: number
