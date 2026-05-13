@@ -154,17 +154,15 @@ export default function Page() {
 
   const [openSearchCommand, setOpenSearchCommand] = useState(false)
 
-  const TEST_SALE_NUMBER = `${register?.prefix}-0000001`
-
   const form = useForm({
     defaultValues: {
       customer: "",
       items: [] as any,
       discount: 0,
+      subTotal: 0,
       total: 0,
       notes: "",
     },
-
     onSubmit: ({ value: payload }: any) =>
       startTransition(() => {
         try {
@@ -181,8 +179,8 @@ export default function Page() {
   useEffect(() => {
     if (items.length > 0) {
       const total = items.reduce((acc: any, curr: any) => acc + curr.total, 0)
-      const discountValue = 1 - discount / 100
-      form.setFieldValue("total", total * discountValue)
+      form.setFieldValue("subTotal", total)
+      form.setFieldValue("total", total - discount)
     } else {
       form.setFieldValue("discount", 0)
       form.setFieldValue("total", 0)
@@ -328,12 +326,11 @@ export default function Page() {
                                     item.price == product.currentPrice
                                   ) {
                                     const newQty = item.quantity + 1
-                                    const discountValue =
-                                      1 - item.discount / 100
                                     const itemPrice =
-                                      product.currentPrice * discountValue
+                                      product.currentPrice - item.discount
                                     return {
                                       ...item,
+                                      subTotal: product.currentPrice * newQty,
                                       quantity: newQty,
                                       price: itemPrice,
                                       total: itemPrice * newQty,
@@ -349,6 +346,7 @@ export default function Page() {
                                   quantity: 1,
                                   name: product.name,
                                   price: product.currentPrice,
+                                  subTotal: product.currentPrice,
                                   discount: 0,
                                   total: product.currentPrice,
                                 },
@@ -441,11 +439,6 @@ export default function Page() {
                                   {item.discount > 0 && (
                                     <>
                                       <span className="block text-sm text-muted-foreground">
-                                        (
-                                        {item.discount > 0
-                                          ? `${item.discount} %`
-                                          : null}
-                                        ){" "}
                                         <span className="line-through">
                                           {new Intl.NumberFormat("en-PH", {
                                             style: "currency",
@@ -527,29 +520,22 @@ export default function Page() {
                                     {new Intl.NumberFormat("en-PH", {
                                       style: "currency",
                                       currency: "PHP",
-                                    }).format(
-                                      state.total / (1 - state.discount / 100)
-                                    )}
+                                    }).format(state.subTotal)}
                                   </span>
                                 </div>
                               )}
                               <Separator />
-
                               {state.discount > 0 ? (
                                 <>
                                   <div className="flex items-center justify-between text-blue-800">
-                                    <span>Discount ({state.discount} %)</span>
+                                    <span>Discount</span>
                                     <div>
                                       <span className="text-blue">
                                         -{" "}
                                         {new Intl.NumberFormat("en-PH", {
                                           style: "currency",
                                           currency: "PHP",
-                                        }).format(
-                                          state.total /
-                                            (1 - state.discount / 100) -
-                                            state.total
-                                        )}
+                                        }).format(state.discount)}
                                       </span>
                                     </div>
                                   </div>

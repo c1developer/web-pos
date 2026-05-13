@@ -29,6 +29,7 @@ function TotalDiscount({
   state: any
 }>) {
   const [open, setOpen] = useState<boolean>()
+  const [discountType, setDiscountType] = useState<"%" | "₱">("₱")
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -46,23 +47,65 @@ function TotalDiscount({
         </SheetHeader>
         <div className="flex flex-col gap-2 px-4">
           <div className="space-y-2">
-            <Label>Disc. (%)</Label>
-            <Input
-              value={state?.discount || 0}
-              type="number"
-              min={0}
-              max={100}
-              onChange={(e) => {
-                {
-                  const discount = parseInt(e.target.value)
-                  const discountValue = 1 - discount / 100
-                  form.setFieldValue("discount", discount)
-                  form.setFieldValue("total", state.total * discountValue)
+            <Label>
+              Discount ({discountType === "%" ? "%" : "₱"})
+              <span
+                className="text-primary hover:cursor-pointer hover:underline hover:underline-offset-2"
+                onClick={() =>
+                  setDiscountType(discountType === "%" ? "₱" : "%")
                 }
-              }}
-            />
+              >
+                {discountType === "%"
+                  ? "Change to fixed amount"
+                  : "Change to percent"}
+              </span>
+            </Label>
+            {discountType === "%" && (
+              <InputGroup>
+                <InputGroupAddon align="inline-end">%</InputGroupAddon>
+                <InputGroupInput
+                  value={parseFloat(
+                    (
+                      (state?.discount / (state?.total + state?.discount)) *
+                      100
+                    ).toFixed(2)
+                  )}
+                  type="number"
+                  min={0}
+                  max={100}
+                  onChange={(e) => {
+                    const percentDiscount = parseFloat(e.target.value || "0")
+                    const originalTotal = state.total + state.discount
+                    const discountAmount = parseFloat(
+                      ((percentDiscount / 100) * originalTotal).toFixed(2)
+                    )
+                    form.setFieldValue("discount", discountAmount)
+                    form.setFieldValue("total", originalTotal - discountAmount)
+                  }}
+                />
+              </InputGroup>
+            )}
+            <InputGroup>
+              <InputGroupAddon>₱</InputGroupAddon>
+              <InputGroupInput
+                value={
+                  state?.discount ? parseFloat(state.discount.toFixed(2)) : 0
+                }
+                type="number"
+                min={0}
+                max={state.total + state.discount}
+                readOnly={discountType === "%"}
+                onChange={(e) => {
+                  const discount = parseFloat(e.target.value || "0")
+                  const originalTotal = parseFloat(
+                    (state.total + state.discount).toFixed(2)
+                  )
+                  form.setFieldValue("discount", discount)
+                  form.setFieldValue("total", originalTotal - discount)
+                }}
+              />
+            </InputGroup>
           </div>
-
           <div className="space-y-2">
             <Label>Total</Label>
             <InputGroup>
@@ -82,9 +125,9 @@ function TotalDiscount({
                     align="inline-end"
                   >
                     ₱
-                    {parseFloat(
-                      String(state.total / (1 - state.discount / 100))
-                    ).toFixed(2)}
+                    {parseFloat(String(state.total + state.discount)).toFixed(
+                      2
+                    )}
                   </InputGroupAddon>
                 </>
               )}

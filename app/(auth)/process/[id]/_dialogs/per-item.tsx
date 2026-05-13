@@ -34,6 +34,7 @@ function PerItem({
 }>) {
   const [open, setOpen] = useState<boolean>()
   const item = state.items[index]
+  const [discountType, setDiscountType] = useState<"%" | "₱">("₱")
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -54,14 +55,14 @@ function PerItem({
                 {
                   const quantity = parseInt(e.target.value)
                   form.setFieldValue(`items`, () => {
-                    const discountValue = 1 - item.discount / 100
-                    const itemPrice = item.price * discountValue
+                    const itemPrice = product.currentPrice - item.discount
                     const itemTotal = quantity * itemPrice
                     return state.items.map((i: any, idx: number) => {
                       if (idx === index) {
                         return {
                           ...i,
                           quantity,
+                          subTotal: quantity * product.currentPrice,
                           price: itemPrice,
                           total: itemTotal,
                         }
@@ -73,34 +74,84 @@ function PerItem({
             />
           </div>
           <div className="space-y-2">
-            <Label>Disc. (%)</Label>
-            <Input
-              value={item?.discount || 0}
-              type="number"
-              min={0}
-              max={100}
-              onChange={(e) => {
-                {
-                  const discount = parseInt(e.target.value)
-                  form.setFieldValue(`items`, () => {
-                    console.log(discount)
-                    const discountValue = 1 - discount / 100
-                    const itemPrice = product.currentPrice * discountValue
-                    const itemTotal = item.quantity * itemPrice
-                    return state.items.map((i: any, idx: number) => {
-                      if (idx === index) {
-                        return {
-                          ...i,
-                          discount,
-                          price: itemPrice,
-                          total: itemTotal,
-                        }
-                      } else return i
-                    })
-                  })
+            <Label>
+              Discount  {discountType === "%" ? "(%)" : "per item (₱)"}
+              <span
+                className="text-primary hover:cursor-pointer hover:underline hover:underline-offset-2"
+                onClick={() =>
+                  setDiscountType(discountType === "%" ? "₱" : "%")
                 }
-              }}
-            />
+              >
+                {discountType === "%"
+                  ? "Change to fixed amount"
+                  : "Change to percent"}
+              </span>
+            </Label>
+            {discountType === "%" && (
+              <InputGroup>
+                <InputGroupAddon align="inline-end">%</InputGroupAddon>
+                <InputGroupInput
+                  value={parseFloat(
+                    ((item?.discount / product.currentPrice) * 100).toFixed(2)
+                  )}
+                  type="number"
+                  min={0}
+                  max={100}
+                  onChange={(e) => {
+                    {
+                      const discount = parseFloat(e.target.value || "0")
+                      form.setFieldValue(`items`, () => {
+                        const discountAmount = (
+                          (discount / 100) *
+                          product.currentPrice
+                        ).toFixed(2)
+                        const itemPrice = product.currentPrice - +discountAmount
+                        const itemTotal = item.quantity * itemPrice
+                        return state.items.map((i: any, idx: number) => {
+                          if (idx === index) {
+                            return {
+                              ...i,
+                              discount: discountAmount,
+                              price: itemPrice,
+                              total: itemTotal,
+                            }
+                          } else return i
+                        })
+                      })
+                    }
+                  }}
+                />
+              </InputGroup>
+            )}
+            <InputGroup>
+              <InputGroupAddon>₱</InputGroupAddon>
+              <InputGroupInput
+                value={item?.discount || 0}
+                type="number"
+                min={0}
+                max={product.currentPrice}
+                readOnly={discountType === "%"}
+                onChange={(e) => {
+                  {
+                    const discount = parseFloat(e.target.value)
+                    form.setFieldValue(`items`, () => {
+                      const itemPrice = product.currentPrice - discount
+                      const itemTotal = item.quantity * itemPrice
+                      return state.items.map((i: any, idx: number) => {
+                        if (idx === index) {
+                          return {
+                            ...i,
+                            discount,
+                            price: itemPrice,
+                            total: itemTotal,
+                          }
+                        } else return i
+                      })
+                    })
+                  }
+                }}
+              />
+            </InputGroup>
           </div>
           <div className="space-y-2">
             <Label>{item.discount > 0 ? "Discounted Price" : "Price"}</Label>
