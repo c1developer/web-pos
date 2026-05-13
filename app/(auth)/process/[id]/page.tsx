@@ -155,10 +155,12 @@ export default function Page() {
     defaultValues: {
       customer: "",
       items: [] as any,
+      payments: [] as any,
       discount: 0,
       subTotal: 0,
       total: 0,
       notes: "",
+      change: 0,
     },
     onSubmit: ({ value: payload }: any) =>
       startTransition(() => {
