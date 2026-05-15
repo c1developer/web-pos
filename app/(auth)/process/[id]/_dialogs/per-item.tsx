@@ -18,6 +18,11 @@ import {
   InputGroupInput,
 } from "@/components/ui/input-group"
 import { cn } from "@/lib/utils"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 function PerItem({
   children,
@@ -36,7 +41,49 @@ function PerItem({
 
   return (
     <Sheet open={open} onOpenChange={setOpen} modal={true}>
-      <SheetTrigger asChild>{children}</SheetTrigger>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <SheetTrigger asChild>{children}</SheetTrigger>
+        </TooltipTrigger>
+        <TooltipContent side="bottom" className="h-auto">
+          <div>
+            <span className="block">Item: {item.quantity}</span>
+            <span className="block">
+              Price:{" "}
+              {item.discount > 0 && (
+                <span className="line-through">
+                  {new Intl.NumberFormat("en-PH", {
+                    style: "currency",
+                    currency: "PHP",
+                  }).format(item.snapshotPrice)}
+                </span>
+              )}{" "}
+              {new Intl.NumberFormat("en-PH", {
+                style: "currency",
+                currency: "PHP",
+              }).format(item.price)}
+            </span>
+            {item.discount > 0 && (
+              <span className="block">
+                Disc.:{" "}
+                {new Intl.NumberFormat("en-PH", {
+                  style: "currency",
+                  currency: "PHP",
+                }).format(item.discount)}
+              </span>
+            )}
+            <span className="block">
+              Tot.:{" "}
+              <span>
+                {new Intl.NumberFormat("en-PH", {
+                  style: "currency",
+                  currency: "PHP",
+                }).format(item.total)}
+              </span>
+            </span>
+          </div>
+        </TooltipContent>
+      </Tooltip>
       <SheetContent>
         <SheetHeader>
           <SheetTitle className="text-center text-xl font-bold">

@@ -5,89 +5,52 @@ import type { IPayment } from "./payment.type"
 import type { IProduct } from "./product.type"
 
 export enum SaleStatus {
-  PENDING = "PENDING",
   PARTIALLY_PAID = "PARTIALLY_PAID",
   COMPLETED = "COMPLETED",
-  CANCELLED = "CANCELLED",
   REFUNDED = "REFUNDED",
+  VOIDED = "VOIDED",
 }
 
 export interface ISaleItem {
-  product: Types.ObjectId | string | IProduct
+  product: IProduct | Types.ObjectId | string
   snapshotName: string
   snapshotPrice: number
-  price: number
   quantity: number
   discount: number
+  price: number
+  subTotal: number
   total: number
 }
 
-export interface IPaymentAllocation {
+export interface ISalePayment {
+  method: IPayment | Types.ObjectId | string
   amount: number
-  payment: Types.ObjectId | string | IPayment
-  date: Date
+  note?: string
+  date: string
+  payment?: Types.ObjectId | string
 }
 
-export interface ISaleHistoryItem {
+export interface ISaleStatusHistoryItem {
   status: SaleStatus
-  date: Date
-  by: Types.ObjectId | string | IUser
+  date: string
+  by: IUser | Types.ObjectId | string
 }
 
 export interface ISale {
-  _id: Types.ObjectId | string
+  _id: Types.ObjectId
   saleNumber: string
-  customer: Types.ObjectId | string | ICustomer | null
+  customer: ICustomer | null | Types.ObjectId | string
   items: ISaleItem[]
+  payments: ISalePayment[]
+  subTotal: number
   discount: number
   total: number
-  allocations: IPaymentAllocation[]
-  paid: number
-  unappliedAmount: number
-  date: Date
-  by: Types.ObjectId | string | IUser
+  receivedAmount: number
+  changeAmount: number
+  netAmount: number
   notes: string
   currentStatus: SaleStatus
-  onAccount: boolean
-  statusHistory: ISaleHistoryItem[]
-}
-
-// Inputs
-export interface ISaleItemInput {
-  product: Types.ObjectId | string
-  name: string // Snapshot of the product name at the time of sale
-  price: number // Snapshot of the product price at the time of sale
-  quantity: number
-  discount: number
-  total: number
-}
-
-export interface IPaymentAllocationInput {
-  amount: number
-  payment: Types.ObjectId | string
-  date: Date
-}
-
-export interface ISaleInput {
-  _id: Types.ObjectId | string
-  saleNumber: string
-  customer: Types.ObjectId | string
-  items: ISaleItemInput[]
-  discount: number
-  total: number
-  allocations: IPaymentAllocationInput[]
-  paid: number
-  unappliedAmount: number
-  date: Date
-  by: Types.ObjectId | string | IUser
-  onAccount: boolean
-}
-
-export interface ISaleNode {
-  _id: Types.ObjectId | string
-  saleNumber: string
-  customerName: string | null
-  total: number
-  date: Date
-  currentStatus: SaleStatus
+  register?: Types.ObjectId | string
+  saleStatusHistory: ISaleStatusHistoryItem[]
+  by: IUser | Types.ObjectId | string
 }

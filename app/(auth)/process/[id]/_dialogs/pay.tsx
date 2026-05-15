@@ -15,7 +15,13 @@ import { Separator } from "@/components/ui/separator"
 import { ButtonGroup } from "@/components/ui/button-group"
 import { IRegister } from "@/types/register.type"
 import { IPaymentMethod } from "@/types/paymentMethod.type"
-import { XIcon } from "@phosphor-icons/react"
+import {
+  ArrowArcLeftIcon,
+  ArrowElbowDownRightIcon,
+  XIcon,
+} from "@phosphor-icons/react"
+import { toast } from "sonner"
+import { Textarea } from "@/components/ui/textarea"
 
 const amountShortcuts = [20, 50, 100, 200, 500, 1000]
 
@@ -38,14 +44,8 @@ function Pay({
     (acc: number, item: any) => acc + item.quantity,
     0
   )
-  const paidAmount =
-    total -
-    state.payments.reduce(
-      (acc: number, payment: { amount: number }) => acc + payment.amount,
-      0
-    )
-  const change = paidAmount < 0 ? Math.abs(paidAmount) : 0
   const [amountTendered, setAmountTendered] = useState<number>(total)
+  const [note, setNote] = useState<string>("")
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -55,7 +55,7 @@ function Pay({
   const paymentMethods = useMemo(
     () =>
       register?.paymentMethods.map((r: IRegister) => ({
-        id: r._id,
+        _id: r._id,
         name: r.name,
       })),
     [register]
@@ -112,31 +112,54 @@ function Pay({
                     <Label>Payments</Label>
                   </div>
                   {state.payments.map((payment: any, index: number) => (
-                    <div className="flex justify-between gap-2" key={index}>
-                      <Label>
-                        <XIcon
-                          className="text-destructive hover:cursor-pointer hover:underline hover:underline-offset-2"
-                          onClick={() =>
-                            form.setFieldValue(
-                              "payments",
-                              state.payments.filter(
-                                (_: any, i: number) => i !== index
+                    <div key={index} className="space-y-1">
+                      <div className="flex justify-between gap-2">
+                        <Label>
+                          <XIcon
+                            className="-mr-1 text-destructive hover:cursor-pointer hover:underline hover:underline-offset-2"
+                            onClick={() => {
+                              const newReceivedAmount =
+                                state.receivedAmount - payment.amount
+                              const changeAmount =
+                                newReceivedAmount - state.changeAmount > 0
+                                  ? 0
+                                  : state.changeAmount - payment.amount
+                              const netAmount = newReceivedAmount - changeAmount
+                              form.setFieldValue(
+                                "payments",
+                                state.payments.filter(
+                                  (_: any, i: number) => i !== index
+                                )
                               )
-                            )
+                              form.setFieldValue(
+                                "receivedAmount",
+                                newReceivedAmount
+                              )
+                              form.setFieldValue("changeAmount", changeAmount)
+                              form.setFieldValue("netAmount", netAmount)
+                            }}
+                          />
+                          {
+                            paymentMethods.find(
+                              (p: IPaymentMethod) => payment.method === p._id
+                            )?.name
                           }
-                        />
-                        {
-                          paymentMethods.find(
-                            (p: IPaymentMethod) => payment._id === p._id
-                          )?.name
-                        }
-                      </Label>
-                      <Label className="text-primary">
-                        {new Intl.NumberFormat("en-PH", {
-                          style: "currency",
-                          currency: "PHP",
-                        }).format(payment.amount)}
-                      </Label>
+                        </Label>
+                        <Label className="text-primary">
+                          {new Intl.NumberFormat("en-PH", {
+                            style: "currency",
+                            currency: "PHP",
+                          }).format(payment.amount)}
+                        </Label>
+                      </div>
+                      {payment.note && (
+                        <div className="flex justify-start gap-2">
+                          <Label className="text-xs text-muted-foreground">
+                            <ArrowElbowDownRightIcon className="-mr-1" />{" "}
+                            <span className="font-medium">{payment.note}</span>
+                          </Label>
+                        </div>
+                      )}
                     </div>
                   ))}
                   <Separator />
@@ -148,10 +171,10 @@ function Pay({
                   {new Intl.NumberFormat("en-PH", {
                     style: "currency",
                     currency: "PHP",
-                  }).format(paidAmount >= 0 ? paidAmount : 0)}
+                  }).format(state.total - state.receivedAmount)}
                 </Label>
               </div>
-              {change > 0 && (
+              {state.changeAmount > 0 && (
                 <>
                   <Separator />
                   <div className="flex justify-between gap-2 text-destructive">
@@ -160,7 +183,7 @@ function Pay({
                       {new Intl.NumberFormat("en-PH", {
                         style: "currency",
                         currency: "PHP",
-                      }).format(change)}
+                      }).format(state.changeAmount)}
                     </Label>
                   </div>
                 </>
@@ -177,45 +200,71 @@ function Pay({
                 className="h-full text-center md:text-5xl"
               />
             </InputGroup>
-            <ButtonGroup>
-              {amountShortcuts.map((amount) => {
-                if (amount > amountTendered)
-                  return (
+            {state.total > state.receivedAmount && (
+              <>
+                <ButtonGroup>
+                  {amountShortcuts.map((amount) => {
+                    if (amount > amountTendered)
+                      return (
+                        <Button
+                          variant="outline"
+                          key={amount}
+                          onClick={() => setAmountTendered(amount)}
+                        >
+                          {new Intl.NumberFormat("en-PH", {
+                            style: "currency",
+                            currency: "PHP",
+                          }).format(amount)}
+                        </Button>
+                      )
+                  })}
+                </ButtonGroup>
+                <ButtonGroup>
+                  {register?.paymentMethods?.map((method: any) => (
                     <Button
-                      variant="outline"
-                      key={amount}
-                      onClick={() => setAmountTendered(amount)}
+                      size="lg"
+                      key={method._id}
+                      className="p-3 text-xl"
+                      onClick={() => {
+                        if (amountTendered <= 0) {
+                          toast.error("Amount must be greater than zero.")
+                          return
+                        }
+                        const receivedAmount =
+                          state.receivedAmount + amountTendered
+                        const changeAmount = receivedAmount - state.total
+                        const netAmount = receivedAmount - changeAmount
+                        form.setFieldValue("payments", [
+                          ...state.payments,
+                          {
+                            method: method._id,
+                            amount: amountTendered,
+                            date: new Date(),
+                            note,
+                          },
+                        ])
+                        form.setFieldValue("receivedAmount", receivedAmount)
+                        form.setFieldValue("changeAmount", changeAmount)
+                        form.setFieldValue("netAmount", netAmount)
+                        setAmountTendered(0)
+                        setNote("")
+                      }}
                     >
-                      {new Intl.NumberFormat("en-PH", {
-                        style: "currency",
-                        currency: "PHP",
-                      }).format(amount)}
+                      {method.name}
                     </Button>
-                  )
-              })}
-            </ButtonGroup>
-            <ButtonGroup>
-              {register?.paymentMethods?.map((method: any) => (
-                <Button
-                  size="lg"
-                  key={method._id}
-                  className="p-3 text-xl"
-                  onClick={() => {
-                    form.setFieldValue("payments", [
-                      ...state.payments,
-                      {
-                        method: method._id,
-                        amount: amountTendered,
-                        date: new Date(),
-                      },
-                    ])
-                    setAmountTendered(0)
-                  }}
-                >
-                  {method.name}
-                </Button>
-              ))}
-            </ButtonGroup>
+                  ))}
+                </ButtonGroup>
+                <div className="space-y-2">
+                  <Label>Note (optional)</Label>
+                  <Textarea
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    className="bg-white"
+                    placeholder="ex. Reference No."
+                  />
+                </div>
+              </>
+            )}
           </div>
         </div>
         <SheetFooter>

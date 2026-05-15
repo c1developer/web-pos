@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils"
 import { Metadata } from "next"
 import ApolloLayout from "@/components/custom/layouts/apollo-layout"
 import { Toaster } from "@/components/ui/sonner"
+import { TooltipProvider } from "@/components/ui/tooltip"
 
 export const metadata: Metadata = {
   title: "Point of Sale System",
@@ -34,7 +35,9 @@ export default function RootLayout({
       )}
     >
       <body>
-        <ApolloLayout>{children}</ApolloLayout>
+        <ApolloLayout>
+          <TooltipProvider>{children}</TooltipProvider>
+        </ApolloLayout>
         <Toaster richColors theme="light" visibleToasts={5} expand />
       </body>
     </html>

@@ -2,7 +2,7 @@
 import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { useRegisterStore } from "@/hooks/use-register"
-import { useQuery } from "@apollo/client/react"
+import { useMutation, useQuery } from "@apollo/client/react"
 import { gql } from "@apollo/client"
 import { ButtonGroup } from "@/components/ui/button-group"
 import { Input } from "@/components/ui/input"
@@ -22,7 +22,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
-import { useEffect, useState, useTransition } from "react"
+import { use, useEffect, useState, useTransition } from "react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import {
@@ -67,6 +67,15 @@ import AddCustomer from "./_dialogs/add-customer"
 import PerItem from "./_dialogs/per-item"
 import TotalDiscount from "./_dialogs/total-discount"
 import Pay from "./_dialogs/pay"
+
+const GENERATE_SALE = gql`
+  mutation GenerateSale($input: SaleInput) {
+    generateSale(input: $input) {
+      ok
+      message
+    }
+  }
+`
 
 const GET_REGISTER = gql`
   query ProcessedRegister($_id: ID!) {
@@ -142,6 +151,7 @@ export default function Page() {
   const register = (data as any)?.processedRegister || null
   const router = useRouter()
   const [selectedType, setSelectedType] = useState<string>("")
+  const [generateSale] = useMutation(GENERATE_SALE)
 
   useEffect(() => {
     if (register && register.productTypes.length > 0)
@@ -160,17 +170,31 @@ export default function Page() {
       subTotal: 0,
       total: 0,
       notes: "",
-      change: 0,
+      receivedAmount: 0,
+      changeAmount: 0,
+      netAmount: 0,
+      register: register?._id || "",
     },
     onSubmit: ({ value: payload }: any) =>
-      startTransition(() => {
+      startTransition(async () => {
         try {
-          console.log(payload)
+          const result = await generateSale({
+            variables: {
+              input: {
+                ...payload,
+              },
+            },
+          })
+          console.log(result)
         } catch (error: any) {
           throw error
         }
       }),
   })
+
+  useEffect(() => {
+    form.setFieldValue("register", register?._id || "")
+  }, [register?._id, form])
 
   const items = useStore(form.store, (state) => state.values.items)
   const discount = useStore(form.store, (state) => state.values.discount)
@@ -345,7 +369,6 @@ export default function Page() {
                                   snapshotPrice: product.currentPrice,
                                   snapshotName: product.name,
                                   quantity: 1,
-                                  name: product.name,
                                   price: product.currentPrice,
                                   subTotal: product.currentPrice,
                                   discount: 0,
@@ -415,16 +438,18 @@ export default function Page() {
                               <div className="flex h-16 w-16 items-center justify-center bg-slate-200">
                                 <span className="text-3xl font-semibold text-muted uppercase">
                                   {(() => {
-                                    const nameArray = item.name.split(" ")
+                                    const nameArray =
+                                      item.snapshotName.split(" ")
                                     if (nameArray.length > 1)
                                       return `${nameArray[0][0]}`
-                                    else return `${item.name[0]}${item.name[1]}`
+                                    else
+                                      return `${item.snapshotName[0]}${item.snapshotName[1]}`
                                   })()}
                                 </span>
                               </div>
                               <div className="flex flex-1 items-start justify-between p-2">
                                 <span className="block text-sm">
-                                  {item.name}
+                                  {item.snapshotName}
                                 </span>
                                 <div className="text-right">
                                   <span className="block text-sm font-medium">
@@ -573,6 +598,7 @@ export default function Page() {
                         size="lg"
                         form="sale-form"
                         type="button"
+                        disabled={state.items.length === 0}
                       >
                         <span>Pay</span>
                         <span>
