@@ -26,13 +26,13 @@ export interface ISalePayment {
   method: IPayment | Types.ObjectId | string
   amount: number
   note?: string
-  date: string
+  date: string | Date
   payment?: Types.ObjectId | string
 }
 
 export interface ISaleStatusHistoryItem {
   status: SaleStatus
-  date: string
+  date: string | Date
   by: IUser | Types.ObjectId | string
 }
 

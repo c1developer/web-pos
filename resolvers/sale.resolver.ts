@@ -9,6 +9,7 @@ import { checkSchema, validate } from "../helpers/validate"
 import { saleSchema } from "../validators/sale.validator"
 import { isISOString } from "../helpers/isoString"
 import Register from "@/models/register.model"
+import Payment from "@/models/payment.model"
 
 const CURSOR_TYPE = "sale"
 
@@ -149,44 +150,67 @@ export const saleResolver = {
     },
   },
   Mutation: {
-    generateSale: async (_: any, { input }: any, ctx: any) => {
-      try {
-        if (!ctx.session)
-          throw new GraphQLError("Unauthorized", {
-            extensions: { code: "UNAUTHORIZED" },
+    generateSale: validate(checkSchema(saleSchema))(
+      async (_: any, { input }: any, ctx: any) => {
+        try {
+          if (!ctx.session)
+            throw new GraphQLError("Unauthorized", {
+              extensions: { code: "UNAUTHORIZED" },
+            })
+          const register = await Register.findById(input.register)
+            .select("prefix")
+            .lean()
+          const sales = await Sale.find({
+            register: input.register,
           })
-        const register = await Register.findById(input.register)
-          .select("prefix")
-          .lean()
-        const sales = await Sale.find({
-          register: input.register,
-        })
-          .sort({ createdAt: -1 })
-          .select("saleNumber")
-          .lean()
-        const count = sales.length
-        const newSale = flatten({
-          ...input,
-          saleNumber: `${register?.prefix || "REG"}-${String(count + 1).padStart(5, "0")}`,
-          currentStatus: "COMPLETED",
-          salesStatusHistory: [
-            {
-              status: "COMPLETED",
-              date: new Date(),
+            .sort({ createdAt: -1 })
+            .select("saleNumber")
+            .lean()
+          // Generate Multiple Payments
+          const payments = await Payment.insertMany(
+            input.payments.map((payment: any) => ({
+              ...payment,
               by: ctx.session._id,
-            },
-          ],
-          by: ctx.session._id,
-        })
-        const result = await Sale.create(newSale)
-        return {
-          ok: true,
-          message: "Sale created successfully.",
-          data: result,
+              sale: [], // Will be updated after sale creation
+            }))
+          )
+          console.log
+          const count = sales.length
+          const newSale = flatten({
+            ...input,
+            payments: payments.map((payment) => ({
+              method: payment.method,
+              amount: payment.amount,
+              note: payment.note,
+              date: payment.date,
+              payment: payment._id,
+            })),
+            saleNumber: `${register?.prefix || "REG"}-${String(count + 1).padStart(5, "0")}`,
+            currentStatus: "COMPLETED",
+            saleStatusHistory: [
+              {
+                status: "COMPLETED",
+                date: new Date(),
+                by: ctx.session._id,
+              },
+            ],
+            by: ctx.session._id,
+          })
+          const result = await Sale.create(newSale)
+          // Update payments with the sale ID
+          await Payment.updateMany(
+            { _id: { $in: payments.map((payment) => payment._id) } },
+            { $set: { sale: result._id } }
+          )
+          return {
+            ok: true,
+            message: "Sale created successfully.",
+            data: result,
+          }
+        } catch (error) {
+          throw error
         }
-      } catch (error) {
-        throw error
       }
-    },
+    ),
   },
 }

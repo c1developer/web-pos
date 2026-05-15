@@ -1,0 +1,20 @@
+import { model, models, Schema } from "mongoose"
+import { type IPayment } from "../types/payment.type"
+
+const Payment = new Schema<IPayment>(
+  {
+    amount: { type: Number, required: true },
+    method: {
+      type: Schema.Types.ObjectId,
+      ref: "Payment_Method",
+      required: true,
+    },
+    date: { type: Date, required: true },
+    note: { type: String },
+    by: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    sale: [{ type: Schema.Types.ObjectId, ref: "Sale", required: true }],
+  },
+  { timestamps: true }
+)
+
+export default models.Payment || model<IPayment>("Payment", Payment)

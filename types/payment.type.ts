@@ -8,9 +8,7 @@ export interface IPayment {
   method: IPaymentMethod | Types.ObjectId | string
   amount: number
   note?: string
-  date: string
+  date: string | Date
   by: IUser | Types.ObjectId | string
   sale: ISale[] | Types.ObjectId[] | string[]
-  createdAt: Date
-  updatedAt: Date
 }

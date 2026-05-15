@@ -30,8 +30,8 @@ const SalePayment = new Schema<ISalePayment>(
     },
     amount: { type: Number, required: true },
     note: { type: String },
-    date: { type: String, required: true },
-    // payment: { type: Schema.Types.ObjectId, ref: "Payment" },
+    date: { type: Date, required: true },
+    payment: { type: Schema.Types.ObjectId, ref: "Payment" },
   },
   { _id: false }
 )
@@ -43,7 +43,7 @@ const SaleStatusHistoryItem = new Schema<ISaleStatusHistoryItem>(
       enum: Object.values(SaleStatus),
       required: true,
     },
-    date: { type: String },
+    date: { type: Date, required: true },
     by: { type: Schema.Types.ObjectId, ref: "User", required: true },
   },
   { _id: false }

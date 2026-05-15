@@ -178,6 +178,7 @@ export default function Page() {
     onSubmit: ({ value: payload }: any) =>
       startTransition(async () => {
         try {
+          console.log(payload)
           const result = await generateSale({
             variables: {
               input: {
@@ -187,6 +188,7 @@ export default function Page() {
           })
           console.log(result)
         } catch (error: any) {
+          console.error(JSON.stringify(error, null, 2))
           throw error
         }
       }),

@@ -5,7 +5,8 @@ export const saleSchema = z.object({
   items: z.array(
     z.object({
       product: z.string(),
-      name: z.string(),
+      snapshotName: z.string(),
+      snapshotPrice: z.number(),
       price: z.number(),
       quantity: z.number(),
       subTotal: z.number(),
@@ -17,7 +18,8 @@ export const saleSchema = z.object({
   subTotal: z.number(),
   discount: z.number(),
   total: z.number(),
-  by: z.string(),
-  currentStatus: z.string(),
-  onAccount: z.boolean(),
+  receivedAmount: z.number(),
+  changeAmount: z.number(),
+  netAmount: z.number(),
+  register: z.string(),
 })
