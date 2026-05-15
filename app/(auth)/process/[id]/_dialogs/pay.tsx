@@ -268,7 +268,7 @@ function Pay({
           </div>
         </div>
         <SheetFooter>
-          <Button type="submit" form="sale-form">
+          <Button type="submit" form="sale-form" onClick={() => setOpen(false)}>
             Pay
           </Button>
           <SheetClose asChild>

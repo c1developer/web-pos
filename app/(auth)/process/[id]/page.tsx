@@ -67,6 +67,7 @@ import AddCustomer from "./_dialogs/add-customer"
 import PerItem from "./_dialogs/per-item"
 import TotalDiscount from "./_dialogs/total-discount"
 import Pay from "./_dialogs/pay"
+import { toast } from "sonner"
 
 const GENERATE_SALE = gql`
   mutation GenerateSale($input: SaleInput) {
@@ -178,7 +179,6 @@ export default function Page() {
     onSubmit: ({ value: payload }: any) =>
       startTransition(async () => {
         try {
-          console.log(payload)
           const result = await generateSale({
             variables: {
               input: {
@@ -186,7 +186,10 @@ export default function Page() {
               },
             },
           })
-          console.log(result)
+          if ((result.data as any).generateSale.ok) {
+            form.reset()
+            toast.success((result.data as any).generateSale.message)
+          }
         } catch (error: any) {
           console.error(JSON.stringify(error, null, 2))
           throw error
@@ -296,13 +299,24 @@ export default function Page() {
                       disabled
                       size="icon"
                       className="font-base"
+                      type="button"
                     >
                       <GraduationCapIcon />
                     </Button>
-                    <Button variant="outline" disabled className="font-base">
+                    <Button
+                      variant="outline"
+                      disabled
+                      className="font-base"
+                      type="button"
+                    >
                       Gift Card
                     </Button>
-                    <Button variant="outline" disabled className="font-base">
+                    <Button
+                      variant="outline"
+                      disabled
+                      className="font-base"
+                      type="button"
+                    >
                       Custom Sale
                     </Button>
                   </ButtonGroup>
@@ -318,6 +332,7 @@ export default function Page() {
                           "bg-blue-400 text-primary-foreground hover:bg-blue-400/80 hover:text-white"
                       )}
                       onClick={() => setSelectedType(type._id)}
+                      type="button"
                     >
                       {type.name}
                     </Button>
@@ -490,6 +505,7 @@ export default function Page() {
                                       )
                                   )
                                 }}
+                                type="button"
                               >
                                 <TrashSimpleIcon />
                               </Button>
@@ -512,7 +528,6 @@ export default function Page() {
                           Notes{" "}
                           {state.notes && (
                             <span className="font-bold text-destructive">
-                              {" "}
                               *
                             </span>
                           )}
