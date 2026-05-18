@@ -18,7 +18,11 @@ export const saleResolver = {
   Query: {
     sale: async (_: any, { _id }: any) => {
       try {
-        const sale = await Sale.findById(_id).lean()
+        const sale = await Sale.findById(_id)
+          .populate(
+            "customer items.product payments.payment salePaymentStatusHistory.paymentRef saleStatusHistory.by by register"
+          )
+          .lean()
         if (!sale) throw new GraphQLError("Sale not found")
         return sale
       } catch (error) {

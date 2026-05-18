@@ -21,21 +21,99 @@ type Props = {
   onClose: () => void
 }
 
-const GET_BRAND = gql`
-  query Brand($_id: ID!) {
-    brand(_id: $_id) {
+const GET_SALE = gql`
+  query Sale($_id: ID!) {
+    sale(_id: $_id) {
       _id
-      name
-      isActive
+      saleNumber
+      subTotal
+      discount
+      total
+      receivedAmount
+      changeAmount
+      netAmount
+      notes
+      currentSaleStatus
+      isOnAccount
       createdAt
       updatedAt
+      customer {
+        _id
+        name
+        email
+        isActive
+        createdAt
+        updatedAt
+      }
+      items {
+        snapshotName
+        snapshotPrice
+        quantity
+        discount
+        price
+        subTotal
+        total
+        product {
+          _id
+          image
+          sku
+          name
+          barcode
+          description
+          currentPrice
+          isActive
+          createdAt
+          updatedAt
+        }
+      }
+      payments {
+        amount
+        change
+        note
+        date
+        method {
+          _id
+          name
+          type
+          isActive
+          createdAt
+          updatedAt
+        }
+      }
+      saleStatusHistory {
+        status
+        date
+        by {
+          _id
+          image
+          name
+          surname
+          displayName
+          email
+          username
+          role
+          pin
+          isActive
+          createdAt
+          updatedAt
+        }
+      }
+      register {
+        _id
+        name
+        prefix
+        isOpen
+        isActive
+        createdAt
+        updatedAt
+      }
     }
   }
 `
 
 export default function ViewDialog({ _id, onClose }: Props) {
   const [open, setOpen] = useState(false)
-  const { data }: any = useQuery(GET_BRAND, {
+  const { data }: any = useQuery(GET_SALE, {
     variables: {
       _id,
     },
@@ -57,29 +135,29 @@ export default function ViewDialog({ _id, onClose }: Props) {
         showCloseButton={false}
       >
         <DialogHeader>
-          <DialogTitle>View Brand</DialogTitle>
-          <DialogDescription>Details of the brand.</DialogDescription>
+          <DialogTitle>View Sale</DialogTitle>
+          <DialogDescription>Details of the sale.</DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-1.5">
           <div>
             <Label>Name</Label>
             <span className="block text-muted-foreground">
-              {data?.brand?.name}
+              {data?.sale?.name}
             </span>
           </div>
           <div>
             <Label>Created Date</Label>
             <span className="block text-muted-foreground">
-              {data?.brand?.createdAt
-                ? format(Number(data.brand.createdAt), "PPpp")
+              {data?.sale?.createdAt
+                ? format(Number(data.sale.createdAt), "PPpp")
                 : "-"}
             </span>
           </div>
           <div>
             <Label>Updated Date</Label>
             <span className="block text-muted-foreground">
-              {data?.brand?.updatedAt
-                ? format(Number(data.brand.updatedAt), "PPpp")
+              {data?.sale?.updatedAt
+                ? format(Number(data.sale.updatedAt), "PPpp")
                 : "-"}
             </span>
           </div>

@@ -396,7 +396,7 @@ export default function Page() {
                           )
                         }}
                       >
-                        <div className="flex flex-1 items-center justify-center bg-slate-200">
+                        <div className="flex flex-1 items-center justify-center bg-slate-300">
                           <span className="text-6xl font-semibold text-muted uppercase">
                             {(() => {
                               const image = product.image?.[0]
@@ -452,7 +452,7 @@ export default function Page() {
                                   {item.quantity}
                                 </span>
                               </div>
-                              <div className="flex h-16 w-16 items-center justify-center bg-slate-200">
+                              <div className="flex h-16 w-16 items-center justify-center bg-slate-300">
                                 <span className="text-3xl font-semibold text-muted uppercase">
                                   {(() => {
                                     const nameArray =
