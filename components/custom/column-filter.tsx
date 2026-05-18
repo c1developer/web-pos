@@ -1,13 +1,13 @@
 "use client"
 import { Filter, FilterType } from "@/types/shared.type"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
   InputGroupInput,
 } from "../ui/input-group"
-import { CheckIcon, EraserIcon } from "@phosphor-icons/react"
+import { CalendarIcon, CheckIcon, EraserIcon } from "@phosphor-icons/react"
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
 import { Button } from "../ui/button"
 import { cn } from "@/lib/utils"
@@ -28,6 +28,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select"
+import { Calendar } from "../ui/calendar"
+import { format } from "date-fns"
+import { DateRange } from "react-day-picker"
+import { formatDateRange } from "little-date"
 
 type Props = {
   label: string
@@ -51,6 +55,23 @@ export default function ColumnFilter({
   )
   // Select filter
   const [openCommand, setOpenCommand] = useState<boolean>(false)
+  // Date filter
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: undefined,
+    to: undefined,
+  })
+
+  useEffect(() => {
+    if (filterType === "DATE" && filter.find((f: any) => f.key === filterKey)) {
+      const [from, to] = filter
+        .find((f: any) => f.key === filterKey)!
+        .value.split("_")
+      setDateRange({
+        from: from ? new Date(from) : undefined,
+        to: to ? new Date(to) : undefined,
+      })
+    }
+  }, [filterType, filterValue, filterKey])
 
   const clearFilter = () => {
     setFilterValue("")
@@ -224,6 +245,66 @@ export default function ColumnFilter({
             </Button>
           )}
         </div>
+      )
+    case FilterType.DATE:
+      return (
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              data-empty={!dateRange}
+              className="w-full justify-start text-left font-normal data-[empty=true]:text-muted-foreground"
+            >
+              <CalendarIcon />
+              {dateRange?.from && dateRange?.to ? (
+                formatDateRange(dateRange.from, dateRange.to, {
+                  includeTime: false,
+                })
+              ) : (
+                <span>Pick a date</span>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0">
+            <Calendar
+              mode="range"
+              defaultMonth={dateRange?.from}
+              selected={dateRange}
+              onSelect={setDateRange}
+              required
+              numberOfMonths={2}
+            />
+            <ButtonGroup>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setDateRange({ from: undefined, to: undefined })
+                  onFilterChange((prev: Filter[]) =>
+                    prev.filter((f: Filter) => f.key != filterKey)
+                  )
+                }}
+              >
+                Reset
+              </Button>
+              <Button
+                onClick={() => {
+                  if (!dateRange?.from || !dateRange?.to) return
+                  const dateRangeISO = `${dateRange.from.toISOString()}_${dateRange.to.toISOString()}`
+                  onFilterChange((prev: Filter[]) => [
+                    ...prev.filter((f: Filter) => f.key != filterKey),
+                    {
+                      key: filterKey,
+                      value: dateRangeISO,
+                      type: FilterType.DATE,
+                    },
+                  ])
+                }}
+              >
+                Apply
+              </Button>
+            </ButtonGroup>
+          </PopoverContent>
+        </Popover>
       )
     default:
       return <span>Test</span>

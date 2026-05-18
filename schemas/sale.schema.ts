@@ -2,10 +2,17 @@ import { gql } from "graphql-tag"
 
 export const saleSchema = gql`
   enum SaleStatus {
-    PARTIALLY_PAID
+    PENDING
     COMPLETED
     REFUNDED
     VOIDED
+  }
+
+  enum SalePaymentStatus {
+    PAID
+    UNPAID
+    PARTIALLY_PAID
+    REFUNDED
   }
 
   type SaleItem {
@@ -22,6 +29,7 @@ export const saleSchema = gql`
   type SalePayment {
     method: PaymentMethod
     amount: Float
+    change: Float
     note: String
     date: String
   }
@@ -45,10 +53,11 @@ export const saleSchema = gql`
     changeAmount: Float
     netAmount: Float
     notes: String
-    currentStatus: SaleStatus
+    currentSaleStatus: SaleStatus
     saleStatusHistory: [SaleStatusHistoryItem]
     register: Register
     by: User
+    isOnAccount: Boolean
     createdAt: String
     updatedAt: String
   }
@@ -105,15 +114,38 @@ export const saleSchema = gql`
     register: ID
   }
 
+  # Sale History Table
+  type SaleHistoryConnection {
+    total: Int
+    pages: Int
+    edges: [SaleHistoryEdge]
+    pageInfo: PageInfo
+  }
+
+  type SaleHistoryNode {
+    _id: ID!
+    date: String
+    saleNumber: String
+    customerName: String
+    saleTotal: Float
+    currentSaleStatus: SaleStatus
+    currentSalePaymentStatus: SalePaymentStatus
+  }
+
+  type SaleHistoryEdge {
+    node: SaleHistoryNode
+    cursor: String
+  }
+
   type Query {
     sale(_id: ID!): Sale
-    saleTable(
+    saleHistoryTable(
       first: Int
       after: String
       search: String
       filter: [Filter]
       sort: Sort
-    ): SaleConnection
+    ): SaleHistoryConnection
     saleOptions: [Option]
   }
 

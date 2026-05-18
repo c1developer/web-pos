@@ -10,6 +10,7 @@ import { saleSchema } from "../validators/sale.validator"
 import { isISOString } from "../helpers/isoString"
 import Register from "@/models/register.model"
 import Payment from "@/models/payment.model"
+import { checkSalesPaymentStatus } from "@/helpers/salesFn"
 
 const CURSOR_TYPE = "sale"
 
@@ -24,7 +25,7 @@ export const saleResolver = {
         throw error
       }
     },
-    saleTable: async (
+    saleHistoryTable: async (
       _: any,
       { first = 10, after, search, filter, sort }: IDataTableArgs
     ) => {
@@ -32,7 +33,13 @@ export const saleResolver = {
         const matchStage: Record<string, any> = {}
 
         if (search)
-          matchStage.$or = [{ name: { $regex: search, $options: "i" } }]
+          matchStage.$or = [
+            { saleNumber: { $regex: search, $options: "i" } },
+            { customerName: { $regex: search, $options: "i" } },
+            { saleTotal: { $regex: search, $options: "i" } },
+            { currentSaleStatus: { $regex: search, $options: "i" } },
+            { currentSalePaymentStatus: { $regex: search, $options: "i" } },
+          ]
 
         if (filter && filter.length > 0)
           matchStage.$and = filter.map(({ type, key, value }) => {
@@ -46,6 +53,7 @@ export const saleResolver = {
                 const [start, end] = value
                   .split("_")
                   .map((date) => new Date(date))
+                console.log(value)
                 if (!start || !end) return null
                 return {
                   [key]: {
@@ -90,6 +98,32 @@ export const saleResolver = {
         }
 
         const pipeline: PipelineStage[] = [
+          {
+            $lookup: {
+              from: "customers",
+              localField: "customer",
+              foreignField: "_id",
+              as: "customer",
+            },
+          },
+          {
+            $unwind: {
+              path: "$customer",
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+          {
+            $addFields: {
+              date: "$createdAt",
+              saleNumber: "$saleNumber",
+              customerName: {
+                $ifNull: ["$customer.name", "Walk-in"],
+              },
+              saleTotal: "$netAmount",
+              currentSaleStatus: "$currentSaleStatus",
+              currentSalePaymentStatus: "$currentSalePaymentStatus",
+            },
+          },
           { $match: matchStage },
           {
             $sort: { [sortKey]: sortOrder, _id: sortOrder },
@@ -97,8 +131,12 @@ export const saleResolver = {
           { $limit: first + 1 },
           {
             $project: {
-              name: 1,
-              isActive: 1,
+              date: 1,
+              saleNumber: 1,
+              customerName: 1,
+              saleTotal: 1,
+              currentSaleStatus: 1,
+              currentSalePaymentStatus: 1,
             },
           },
         ]
@@ -174,19 +212,30 @@ export const saleResolver = {
               sale: [], // Will be updated after sale creation
             }))
           )
-          console.log
           const count = sales.length
+          const paymentStatus = checkSalesPaymentStatus(payments, input.total)
           const newSale = flatten({
             ...input,
             payments: payments.map((payment) => ({
               method: payment.method,
               amount: payment.amount,
+              change: payment.change,
               note: payment.note,
               date: payment.date,
               payment: payment._id,
             })),
             saleNumber: `${register?.prefix || "REG"}-${String(count + 1).padStart(5, "0")}`,
-            currentStatus: "COMPLETED",
+            currentSalePaymentStatus: paymentStatus,
+            salePaymentStatusHistory: payments.map((payment, index, array) => ({
+              status: checkSalesPaymentStatus(
+                array.slice(0, index + 1),
+                input.total
+              ),
+              paymentRef: payment._id,
+              date: new Date(),
+              by: ctx.session._id,
+            })),
+            currentSaleStatus: "COMPLETED",
             saleStatusHistory: [
               {
                 status: "COMPLETED",

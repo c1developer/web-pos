@@ -5,6 +5,8 @@ import {
   type ISale,
   type ISaleItem,
   ISaleStatusHistoryItem,
+  ISalePaymentStatusHistoryItem,
+  SalePaymentStatus,
 } from "../types/sale.type"
 
 const SaleItem = new Schema<ISaleItem>(
@@ -50,6 +52,20 @@ const SaleStatusHistoryItem = new Schema<ISaleStatusHistoryItem>(
   { _id: false }
 )
 
+const SalePaymentStatusHistoryItem = new Schema<ISalePaymentStatusHistoryItem>(
+  {
+    status: {
+      type: String,
+      enum: Object.values(SalePaymentStatus),
+      required: true,
+    },
+    paymentRef: { type: Schema.Types.ObjectId, ref: "Payment" },
+    date: { type: Date, required: true },
+    by: { type: Schema.Types.ObjectId, ref: "User", required: true },
+  },
+  { _id: false }
+)
+
 const Sale = new Schema<ISale>(
   {
     saleNumber: { type: String, required: true, unique: true },
@@ -77,7 +93,16 @@ const Sale = new Schema<ISale>(
     changeAmount: { type: Number, required: true },
     netAmount: { type: Number, required: true },
     notes: { type: String },
-    currentStatus: {
+    currentSalePaymentStatus: {
+      type: String,
+      enum: Object.values(SalePaymentStatus),
+      required: true,
+    },
+    salePaymentStatusHistory: {
+      type: [SalePaymentStatusHistoryItem],
+      default: [],
+    },
+    currentSaleStatus: {
       type: String,
       enum: Object.values(SaleStatus),
       required: true,
@@ -88,6 +113,7 @@ const Sale = new Schema<ISale>(
     },
     register: { type: Schema.Types.ObjectId, ref: "Register", required: true },
     by: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    isOnAccount: { type: Boolean, required: true, default: false },
   },
   { timestamps: true }
 )
