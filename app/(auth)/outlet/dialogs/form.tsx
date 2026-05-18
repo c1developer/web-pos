@@ -58,28 +58,8 @@ export default function FormDialog({ _id, onClose }: Props) {
   const [open, setOpen] = useState<boolean>(false)
   const [isPending, startTransition] = useTransition()
   const [createOutlet] = useMutation(CREATE_OUTLET, {
-    update: (cache, { data }: any) => {
-      const newOutlet = data.createOutlet.data
-      const newEdge = {
-        __typename: "OutletEdge",
-        cursor: newOutlet._id,
-        node: newOutlet,
-      }
-      cache.modify({
-        fields: {
-          outletTable(existing = {}) {
-            const edges = existing.edges || []
-            const exists = edges.some((e: any) => e.node._id === newOutlet._id)
-            if (exists) return existing
-            return {
-              ...existing,
-              edges: [newEdge, ...edges],
-              total: (existing.total || 0) + 1,
-            }
-          },
-        },
-      })
-    },
+    refetchQueries: ["OutletTable"],
+    awaitRefetchQueries: true,
   })
   const [updateOutlet] = useMutation(UPDATE_OUTLET, {
     refetchQueries: ["OutletTable"],

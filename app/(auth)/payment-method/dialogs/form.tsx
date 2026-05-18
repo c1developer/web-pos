@@ -77,30 +77,8 @@ export default function FormDialog({ _id, onClose }: Props) {
   const [open, setOpen] = useState<boolean>(false)
   const [isPending, startTransition] = useTransition()
   const [createPaymentMethod] = useMutation(CREATE_PAYMENT_METHOD, {
-    update: (cache, { data }: any) => {
-      const newPaymentMethod = data.createPaymentMethod.data
-      const newEdge = {
-        __typename: "PaymentMethodEdge",
-        cursor: newPaymentMethod._id,
-        node: newPaymentMethod,
-      }
-      cache.modify({
-        fields: {
-          paymentMethodTable(existing = {}) {
-            const edges = existing.edges || []
-            const exists = edges.some(
-              (e: any) => e.node._id === newPaymentMethod._id
-            )
-            if (exists) return existing
-            return {
-              ...existing,
-              edges: [newEdge, ...edges],
-              total: (existing.total || 0) + 1,
-            }
-          },
-        },
-      })
-    },
+    refetchQueries: ["PaymentMethodTable"],
+    awaitRefetchQueries: true,
   })
   const [updatePaymentMethod] = useMutation(UPDATE_PAYMENT_METHOD, {
     refetchQueries: ["PaymentMethodTable"],

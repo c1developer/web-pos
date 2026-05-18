@@ -118,30 +118,8 @@ export default function RegisterFormDialog({ _id, onClose, outlet }: Props) {
   const [open, setOpen] = useState<boolean>(false)
   const [isPending, startTransition] = useTransition()
   const [createRegister] = useMutation(CREATE_REGISTER, {
-    update: (cache, { data }: any) => {
-      const newRegister = data.createRegister.data
-      const newEdge = {
-        __typename: "RegisterEdge",
-        cursor: newRegister._id,
-        node: newRegister,
-      }
-      cache.modify({
-        fields: {
-          registerTable(existing = {}) {
-            const edges = existing.edges || []
-            const exists = edges.some(
-              (e: any) => e.node._id === newRegister._id
-            )
-            if (exists) return existing
-            return {
-              ...existing,
-              edges: [newEdge, ...edges],
-              total: (existing.total || 0) + 1,
-            }
-          },
-        },
-      })
-    },
+    refetchQueries: ["OutletTable"],
+    awaitRefetchQueries: true,
   })
   const [updateRegister] = useMutation(UPDATE_REGISTER, {
     refetchQueries: "active",

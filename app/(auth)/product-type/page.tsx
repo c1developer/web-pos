@@ -133,6 +133,7 @@ export default function Page() {
       filter,
       sort,
     },
+    fetchPolicy: "cache-and-network",
   })
   // Responsiveness
   const isMobile = useIsMobile()

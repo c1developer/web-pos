@@ -7,6 +7,7 @@ export interface IPayment {
   _id: Types.ObjectId
   method: IPaymentMethod | Types.ObjectId | string
   amount: number
+  change: number
   note?: string
   date: string | Date
   by: IUser | Types.ObjectId | string

@@ -59,35 +59,11 @@ export default function FormDialog({ _id, onClose }: Props) {
   const [open, setOpen] = useState<boolean>(false)
   const [isPending, startTransition] = useTransition()
   const [createCustomer] = useMutation(CREATE_CUSTOMER, {
-    refetchQueries: ["CustomerOptions"],
+    refetchQueries: ["CustomerTable", "CustomerReportTable"],
     awaitRefetchQueries: true,
-    update: (cache, { data }: any) => {
-      const newCustomer = data.createCustomer.data
-      const newEdge = {
-        __typename: "CustomerEdge",
-        cursor: newCustomer._id,
-        node: newCustomer,
-      }
-      cache.modify({
-        fields: {
-          customerTable(existing = {}) {
-            const edges = existing.edges || []
-            const exists = edges.some(
-              (e: any) => e.node._id === newCustomer._id
-            )
-            if (exists) return existing
-            return {
-              ...existing,
-              edges: [newEdge, ...edges],
-              total: (existing.total || 0) + 1,
-            }
-          },
-        },
-      })
-    },
   })
   const [updateCustomer] = useMutation(UPDATE_CUSTOMER, {
-    refetchQueries: ["CustomerTable"],
+    refetchQueries: ["CustomerTable", "CustomerReportTable"],
     awaitRefetchQueries: true,
   })
   const { data }: any = useQuery(FETCH_CUSTOMER, {

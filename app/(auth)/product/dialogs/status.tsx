@@ -50,7 +50,7 @@ export default function StatusDialog({ _id, status, onClose }: Props) {
     skip: !_id || !open,
   })
   const [changeStatus] = useMutation(CHANGE_STATUS_PRODUCT, {
-    refetchQueries: ["ProductTable"],
+    refetchQueries: ["ProcessedRegister", "ProductTable"],
     awaitRefetchQueries: true,
   })
   const statusText = status ? "Deactivate" : "Activate"
@@ -95,7 +95,7 @@ export default function StatusDialog({ _id, status, onClose }: Props) {
             <Button variant="outline">Close</Button>
           </DialogClose>
           <Button
-            variant={statusText ? "destructive" : "default"}
+            variant={status ? "destructive" : "default"}
             onClick={onStatusChange}
           >
             {statusText}

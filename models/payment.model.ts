@@ -9,6 +9,7 @@ const Payment = new Schema<IPayment>(
       ref: "Payment_Method",
       required: true,
     },
+    change: { type: Number, required: true, default: 0 },
     date: { type: Date, required: true },
     note: { type: String },
     by: { type: Schema.Types.ObjectId, ref: "User", required: true },

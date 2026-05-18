@@ -86,6 +86,7 @@ export const saleSchema = gql`
   input SalePaymentInput {
     method: ID
     amount: Float
+    change: Float
     note: String
     date: String
   }

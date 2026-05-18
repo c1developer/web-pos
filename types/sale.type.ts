@@ -3,6 +3,7 @@ import type { ICustomer } from "./customer.type"
 import type { IUser } from "./user.type"
 import type { IPayment } from "./payment.type"
 import type { IProduct } from "./product.type"
+import { IPaymentMethod } from "./paymentMethod.type"
 
 export enum SaleStatus {
   PARTIALLY_PAID = "PARTIALLY_PAID",
@@ -23,8 +24,9 @@ export interface ISaleItem {
 }
 
 export interface ISalePayment {
-  method: IPayment | Types.ObjectId | string
+  method: IPaymentMethod | Types.ObjectId | string
   amount: number
+  change: number
   note?: string
   date: string | Date
   payment?: Types.ObjectId | string

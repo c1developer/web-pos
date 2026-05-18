@@ -239,6 +239,10 @@ function Pay({
                           {
                             method: method._id,
                             amount: amountTendered,
+                            change:
+                              receivedAmount - state.total > 0
+                                ? changeAmount
+                                : 0,
                             date: new Date(),
                             note,
                           },

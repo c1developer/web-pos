@@ -11,6 +11,11 @@ import {
 } from "@/components/ui/dialog"
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import { Label } from "@/components/ui/label"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { useMutation, useQuery } from "@apollo/client/react"
 import gql from "graphql-tag"
 import React, { useState } from "react"
@@ -41,6 +46,12 @@ const CHANGE_STATUS_PAYMENT_METHOD = gql`
   }
 `
 
+const LOCKED_PAYMENT_METHODS = [
+  process.env.NEXT_PUBLIC_CASH_ID,
+  process.env.NEXT_PUBLIC_ON_ACCOUNT_ID,
+  process.env.NEXT_PUBLIC_STORE_CREDIT_ID,
+]
+
 export default function StatusDialog({ _id, status, onClose }: Props) {
   const [open, setOpen] = useState(false)
   const { data }: any = useQuery(GET_PAYMENT_METHOD, {
@@ -55,6 +66,7 @@ export default function StatusDialog({ _id, status, onClose }: Props) {
     awaitRefetchQueries: true,
   })
   const statusText = status ? "Deactivate" : "Activate"
+  console.log(data)
 
   const onStatusChange = async () => {
     try {
@@ -72,9 +84,21 @@ export default function StatusDialog({ _id, status, onClose }: Props) {
   return (
     <Dialog modal open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-          {statusText}
-        </DropdownMenuItem>
+        <Tooltip>
+          <TooltipTrigger className="w-full">
+            <DropdownMenuItem
+              onSelect={(e) => e.preventDefault()}
+              disabled={LOCKED_PAYMENT_METHODS.includes(_id)}
+            >
+              {statusText}
+            </DropdownMenuItem>
+          </TooltipTrigger>
+          <TooltipContent>
+            {LOCKED_PAYMENT_METHODS.includes(_id)
+              ? "This payment method cannot be deactivated."
+              : `${statusText} this payment method.`}
+          </TooltipContent>
+        </Tooltip>
       </DialogTrigger>
       <DialogContent
         onOpenAutoFocus={(e) => e.preventDefault()}
@@ -87,8 +111,8 @@ export default function StatusDialog({ _id, status, onClose }: Props) {
             <span className="underline">{data?.paymentMethod?.name}</span>
           </DialogTitle>
           <DialogDescription>
-            Are you sure you want to {statusText.toLowerCase()} this
-            payment method?
+            Are you sure you want to {statusText.toLowerCase()} this payment
+            method?
           </DialogDescription>
         </DialogHeader>
 
@@ -99,6 +123,7 @@ export default function StatusDialog({ _id, status, onClose }: Props) {
           <Button
             variant={statusText ? "destructive" : "default"}
             onClick={onStatusChange}
+            disabled={LOCKED_PAYMENT_METHODS.includes(_id)}
           >
             {statusText}
           </Button>

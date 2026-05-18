@@ -121,33 +121,11 @@ export default function FormDialog({ _id, onClose }: Props) {
   const [open, setOpen] = useState<boolean>(false)
   const [isPending, startTransition] = useTransition()
   const [createProduct] = useMutation(CREATE_PRODUCT, {
-    refetchQueries: ["ProcessedRegister"],
+    refetchQueries: ["ProcessedRegister", "ProductTable"],
     awaitRefetchQueries: true,
-    update: (cache, { data }: any) => {
-      const newProduct = data.createProduct.data
-      const newEdge = {
-        __typename: "ProductEdge",
-        cursor: newProduct._id,
-        node: newProduct,
-      }
-      cache.modify({
-        fields: {
-          productTable(existing = {}) {
-            const edges = existing.edges || []
-            const exists = edges.some((e: any) => e.node._id === newProduct._id)
-            if (exists) return existing
-            return {
-              ...existing,
-              edges: [newEdge, ...edges],
-              total: (existing.total || 0) + 1,
-            }
-          },
-        },
-      })
-    },
   })
   const [updateProduct] = useMutation(UPDATE_PRODUCT, {
-    refetchQueries: ["ProductTable"],
+    refetchQueries: ["ProcessedRegister", "ProductTable"],
     awaitRefetchQueries: true,
   })
   const { data }: any = useQuery(FETCH_PRODUCT, {
