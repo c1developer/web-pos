@@ -199,7 +199,6 @@ export default function Page() {
           }
         } catch (error: any) {
           console.error(JSON.stringify(error, null, 2))
-          throw error
         }
       }),
   })
